@@ -388,6 +388,7 @@ tr.grp td { background:var(--soft); font-weight:700; }
 @media screen {
   html { height:100%; }
   body { height:100vh; height:100dvh; display:flex; flex-direction:column; overflow:hidden; }
+  #schoolWorkspace { display:flex; flex-direction:column; flex:1; min-height:0; }
   .toolbar { flex-shrink:0; }
   .cards { flex:1; min-height:0; padding:0; overflow:auto; scroll-snap-type:y mandatory; overscroll-behavior:contain; scrollbar-gutter:stable; }
   .page-view { height:100%; padding:16px; display:flex; align-items:center; justify-content:center; scroll-snap-align:start; scroll-snap-stop:always; }
