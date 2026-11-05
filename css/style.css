@@ -41,7 +41,7 @@ html, body { margin:0; font-family: "Segoe UI", Arial, sans-serif; color:var(--i
 .signature-modal-header h2 { margin:0; font-size:16.5px; font-weight:700; color:#122e1f; letter-spacing:-.2px; }
 .signature-modal-header p { margin:3px 0 0; font-size:12.5px; color:#607368; line-height:1.4; }
 .modal-close-btn { border-radius:9px; color:#5a6e62; }
-.signature-modal-body { display:grid; grid-template-columns:1fr 1fr; gap:16px; padding:20px 24px; }
+.signature-modal-body { display:grid; grid-template-columns:1fr; gap:16px; padding:20px 24px; }
 .signature-field { display:flex; flex-direction:column; gap:7px; min-width:0; }
 .signature-label { font-size:12px; font-weight:700; color:#2b4235; letter-spacing:.2px; }
 .signature-input-wrap { position:relative; display:flex; align-items:center; }
