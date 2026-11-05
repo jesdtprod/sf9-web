@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>E-Card DepEd SF9</title>
+<link rel="icon" type="image/png" href="assets/school.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="toolbar no-print">
+  <div class="toolbar-top">
+    <div class="brand-group">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">E</span>
+        <div class="brand-text">
+          <span class="brand-title">E-Card</span>
+          <span class="brand-caption">Student Report Cards</span>
+        </div>
+      </div>
+      <span class="divider" aria-hidden="true"></span>
+      <div class="file-status">
+        <span class="status-label">WORKBOOK</span>
+        <span id="status" class="status" role="status">No file loaded. Open your E-CARD workbook to get started.</span>
+      </div>
+    </div>
+    <div class="file-tools">
+      <span class="offline-badge"><span aria-hidden="true"></span>Offline workspace</span>
+      <button id="btnOpen" class="btn">
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <span class="btn-label">Open Excel File&hellip;</span>
+      </button>
+      <button id="btnReload" class="btn" hidden>
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+        <span class="btn-label">Reload</span>
+      </button>
+    </div>
+  </div>
+  <div class="toolbar-bottom">
+    <div class="field format-field">
+      <span class="field-label">Format</span>
+      <select id="selFormat" aria-label="Report card format">
+        <option value="quarters">4 Quarters - G12</option>
+        <option value="terms-g11">3 Semesters - G11</option>
+        <option value="terms">3 Semesters - G7-10</option>
+      </select>
+    </div>
+    <div class="field card-view-field" id="cardViewField">
+      <span class="field-label">View</span>
+      <select id="selCardView" aria-label="Report card view">
+        <option value="whole">Whole Card</option>
+        <option value="q1">1st Quarter</option>
+        <option value="q2">2nd Quarter</option>
+        <option value="q3">3rd Quarter</option>
+        <option value="q4">4th Quarter</option>
+      </select>
+    </div>
+    <div class="student-tools">
+      <div class="student-group">
+        <div class="field student-field">
+          <span class="field-label">Student</span>
+          <select id="selStudent" aria-label="Student"></select>
+        </div>
+        <div class="student-nav" role="group" aria-label="Student navigation">
+          <button id="btnPrev" class="btn icon-btn" title="Previous student" aria-label="Previous student"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m14 7-5 5 5 5"/></svg></button>
+          <button id="btnNext" class="btn icon-btn" title="Next student" aria-label="Next student"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m10 7 5 5-5 5"/></svg></button>
+        </div>
+      </div>
+    </div>
+    <div class="print-tools">
+      <button id="btnPrintAll" class="btn">
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        <span>Print Whole Section</span>
+      </button>
+      <button id="btnPrint" class="btn primary">
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        <span>Print This Card</span>
+      </button>
+    </div>
+  </div>
+  <input id="fileFallback" type="file" accept=".xlsx,.xlsm" hidden>
+</header>
+<div id="toastContainer" class="toast-container no-print" aria-live="polite"></div>
+
+<main id="cards" class="cards" tabindex="0" aria-label="Report card pages">
+  <div class="empty no-print">
+    <h2>Works offline</h2>
+    <p>Choose the workbook once. The page reads the <b>Students, Core Values, grade sheets</b> and <b>Attendance</b> sheets and builds the report card. After you change anything in Excel and save, press <b>Reload</b>.</p>
+  </div>
+</main>
+
+<footer class="zoombar no-print" aria-label="Page zoom">
+  <div class="zoom-cluster">
+    <div class="zoom-status">
+      <span class="zoom-label">ZOOM</span>
+      <span id="zoomValue" class="zoom-value" aria-live="polite">Fit</span>
+    </div>
+    <div class="zoom-controls">
+      <button id="zoomOut" class="btn icon-btn zoom-btn" title="Zoom out" aria-label="Zoom out"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 12h12"/></svg></button>
+      <input id="zoomRange" type="range" min="25" max="300" step="5" value="100" aria-label="Zoom level">
+      <button id="zoomIn" class="btn icon-btn zoom-btn" title="Zoom in" aria-label="Zoom in"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 12h12M12 6v12"/></svg></button>
+    </div>
+    <span class="divider" aria-hidden="true"></span>
+    <div class="zoom-presets" role="group" aria-label="Zoom presets">
+      <button id="zoomFit" class="btn zoom-preset active" title="Fit whole page to window">Fit page</button>
+      <button id="zoom100" class="btn zoom-preset" title="Actual size (100%)">100%</button>
+    </div>
+  </div>
+</footer>
+
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/core.js"></script>
+<script src="js/dropdown.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
