@@ -187,6 +187,22 @@ select { width:100%; min-width:0; height:100%; padding:0 28px 0 10px; border:0; 
 .empty { max-width:560px; margin:48px auto; background:#fff; padding:24px 28px; border-radius:10px; border:1px solid #e1e8e3; box-shadow:0 2px 8px rgba(15,35,24,.04); }
 .empty h2 { margin:0 0 8px; font-size:17px; color:#163826; }
 .empty p { margin:0; font-size:13.5px; line-height:1.55; color:#4f6357; }
+.workbook-welcome { width:calc(100% - 40px); max-width:620px; margin:clamp(24px,7vh,72px) auto; border:1px solid #e0e8e3; border-radius:20px; background:#fff; box-shadow:0 16px 44px -20px rgba(22,56,38,.22); overflow:hidden; color:#163826; }
+.workbook-school { display:flex; align-items:center; gap:12px; padding:20px 28px; border-bottom:1px solid #edf2ee; }
+.workbook-school img { width:40px; height:40px; object-fit:contain; }
+.workbook-school div { display:flex; flex-direction:column; gap:5px; min-width:0; }
+.workbook-school span { font-size:9px; font-weight:700; letter-spacing:1.5px; color:#74867a; }
+.workbook-school strong { font-size:13px; font-weight:600; }
+.workbook-welcome-body { display:flex; flex-direction:column; align-items:center; text-align:center; padding:32px 28px; background:radial-gradient(ellipse at top,#f3f9f5,transparent 70%); }
+.workbook-file-icon { display:grid; place-items:center; width:64px; height:64px; margin-bottom:20px; border:1px solid #d5e8db; border-radius:18px; background:#eaf5ee; color:var(--brand); box-shadow:0 4px 12px #1f5f3a08; }
+.workbook-file-icon svg { width:30px; height:30px; fill:none; stroke:currentColor; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; }
+.workbook-welcome h2 { margin:0 0 10px; font-size:23px; line-height:1.3; letter-spacing:-.5px; }
+.workbook-welcome p { margin:0 0 24px; font-size:14px; line-height:1.65; color:#607368; }
+.workbook-welcome .btn { min-height:40px; padding:0 20px; font:600 13px "Segoe UI",Arial,sans-serif; }
+.workbook-file-types { margin-top:12px; font-size:11px; color:#7b8b81; }
+.workbook-privacy { display:flex; align-items:center; justify-content:center; gap:7px; padding:14px 20px; border-top:1px solid #edf2ee; background:#fafcfb; color:#6a7f71; font-size:11px; }
+.workbook-privacy svg { width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; }
+@media(max-width:480px) { .workbook-school { padding:16px 20px; } .workbook-welcome-body { padding:28px 20px; } .workbook-welcome h2 { font-size:21px; } .workbook-break { display:none; } }
 
 /* ---------- card pages (shown on screen as the paper) ---------- */
 .cards { padding:16px; }

@@ -197,6 +197,16 @@ console.log('G11 mapping, blank grades, electives, averages, attendance, values,
   assert.match(get('cards').innerHTML, /EDITED NDP PRINCIPAL/);
   assert.match(get('cards').innerHTML, /EDITED NDP ADVISER/);
   console.log('Editable signatories, saved school isolation, clearing, printing and workbook without CARD FRONT passed.');
+  cache.delete('workbook:nds');
+  get('chooseNds').onclick();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.match(get('cards').innerHTML, /workbook-welcome/);
+  assert.match(get('cards').innerHTML, /Notre Dame of Sarmiento/);
+  let openClicks = 0;
+  get('btnOpen').click = () => openClicks++;
+  get('btnEmptyOpen').onclick();
+  assert.equal(openClicks, 1);
+  console.log('Empty workbook state and Open Excel File action passed.');
   console.log('School selection, branding, favicon, switching and workbook signatures passed.');
   console.log('App HTML, format selection, term views, print handlers and incompatible format checks passed (no visual browser check).');
 })().catch(error => { console.error(error); process.exitCode = 1; });

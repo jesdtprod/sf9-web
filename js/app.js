@@ -34,6 +34,16 @@
   function showSkeleton() {
     $('cards').innerHTML = '<div class="skeleton-page no-print"><div><div class="skel-box" style="height:24px;width:45%"></div><div class="skel-box" style="height:140px"></div><div class="skel-box" style="height:180px"></div></div><div><div class="skel-box" style="height:64px"></div><div class="skel-box" style="height:160px"></div><div class="skel-box" style="height:140px"></div></div></div>';
   }
+  function showWorkbookPrompt() {
+    $('cards').innerHTML = '<section class="workbook-welcome no-print" aria-labelledby="workbookWelcomeTitle">' +
+      '<div class="workbook-school"><img src="' + esc(cfg.school.logo) + '" alt=""><div><span>REPORT CARD WORKSPACE</span><strong>' + esc(cfg.school.name) + '</strong></div></div>' +
+      '<div class="workbook-welcome-body"><div class="workbook-file-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></div>' +
+      '<h2 id="workbookWelcomeTitle">Ready to prepare your report cards?</h2><p>Open your Excel workbook to view student records,<br class="workbook-break"> preview both sides, and print your cards.</p>' +
+      '<button id="btnEmptyOpen" class="btn primary"><svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m-4 4 4-4 4 4M4 16v4h16v-4"/></svg>Open Excel File</button>' +
+      '<span class="workbook-file-types">Supports .xlsx and .xlsm workbooks</span></div>' +
+      '<div class="workbook-privacy"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Your workbook stays on this device.</div></section>';
+    $('btnEmptyOpen').onclick = () => $('btnOpen').click();
+  }
   function setBtnLoading(btn, loading) {
     if (!btn) return;
     btn.disabled = loading;
@@ -97,7 +107,7 @@
       const buffer = await file.arrayBuffer();
       if (generation !== loadGeneration) return false;
       if (!loadBuffer(buffer, file.name, generation)) {
-        if (model && generation === loadGeneration) renderOne();
+        if (generation === loadGeneration) { if (model) renderOne(); else showWorkbookPrompt(); }
         return false;
       }
       handle = chosenHandle || null;
@@ -108,7 +118,7 @@
     } catch (e) {
       if (generation === loadGeneration) {
         status('Could not read the file: ' + (e.message || e), true);
-        if (model) renderOne();
+        if (model) renderOne(); else showWorkbookPrompt();
       }
       return false;
     } finally {
@@ -162,13 +172,13 @@
     const cached = saved || legacy;
     if (model || generation !== loadGeneration) return;
     if (!cached) {
-      $('cards').innerHTML = '<div class="empty no-print"><h2>Open your workbook</h2><p>Choose an Excel workbook to prepare report cards for ' + esc(cfg.school.name) + '.</p></div>';
+      showWorkbookPrompt();
       return;
     }
     // Legacy records stored their handle separately; newly saved records bind it to the bytes.
     const savedHandle = Object.prototype.hasOwnProperty.call(cached, 'handle') ? cached.handle : legacyHandle;
     if (!loadBuffer(cached.buffer, cached.name, generation)) {
-      $('cards').innerHTML = '<div class="empty no-print"><h2>Open your workbook</h2><p>Choose an Excel workbook to prepare report cards for ' + esc(cfg.school.name) + '.</p></div>';
+      showWorkbookPrompt();
       return;
     }
     handle = savedHandle || null;
