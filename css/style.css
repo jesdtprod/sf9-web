@@ -226,6 +226,8 @@ tr.grp td { background:var(--soft); font-weight:700; }
 .front-info .f b { flex:0 0 72px; margin-right:0; }
 .front-info .f:nth-child(2) b { flex-basis:68px; }
 .front-info .f span { padding:0 2px; }
+.front-info .section-field { align-items:baseline; }
+.front-info .section-field span { min-width:0; white-space:normal; overflow:visible; overflow-wrap:anywhere; text-overflow:clip; }
 .front-info .lrn-row { width:100%; }
 .front-parent-message { padding:14px 8px 0 18px; text-align:justify; font-size:11pt; line-height:1.22; font-weight:700; }
 .front-parent-message p { margin:0; }

@@ -241,7 +241,7 @@
   /* ---------- card templates ---------- */
   const cell = (v, cls) => '<td class="' + (cls || 'c') + '">' + esc(v) + '</td>';
   const remarkCell = r => '<td class="c ' + (r === 'FAILED' ? 'fail' : '') + '">' + esc(r) + '</td>';
-  const field = (label, val) => '<div class="f"><b>' + label + '</b><span>' + esc(val) + '</span></div>';
+  const field = (label, val) => '<div class="f' + (label === 'Section:' ? ' section-field' : '') + '"><b>' + label + '</b><span>' + esc(val) + '</span></div>';
 
   function attendanceTable(c) {
     const m = c.months;
