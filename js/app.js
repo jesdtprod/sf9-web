@@ -157,12 +157,20 @@
 
   async function restore() {
     const generation = loadGeneration;
+    showSkeleton();
     const [saved, legacy, legacyHandle] = await Promise.all([DB.get('workbook:' + schoolId), schoolId === 'nds' ? DB.get('workbook') : null, schoolId === 'nds' ? DB.get('handle') : null]);
     const cached = saved || legacy;
-    if (model || generation !== loadGeneration || !cached) return;
+    if (model || generation !== loadGeneration) return;
+    if (!cached) {
+      $('cards').innerHTML = '<div class="empty no-print"><h2>Open your workbook</h2><p>Choose an Excel workbook to prepare report cards for ' + esc(cfg.school.name) + '.</p></div>';
+      return;
+    }
     // Legacy records stored their handle separately; newly saved records bind it to the bytes.
     const savedHandle = Object.prototype.hasOwnProperty.call(cached, 'handle') ? cached.handle : legacyHandle;
-    if (!loadBuffer(cached.buffer, cached.name, generation)) return;
+    if (!loadBuffer(cached.buffer, cached.name, generation)) {
+      $('cards').innerHTML = '<div class="empty no-print"><h2>Open your workbook</h2><p>Choose an Excel workbook to prepare report cards for ' + esc(cfg.school.name) + '.</p></div>';
+      return;
+    }
     handle = savedHandle || null;
     $('btnReload').hidden = false;
     status('Restored "' + cached.name + '" - ' + model.students.length + ' students. Saved local copy; ' + (savedHandle ? 'use Reload' : 'use Reload and select the file again') + ' after editing Excel.');
@@ -416,7 +424,9 @@
     else $('btnSignatories').focus();
   }
   $('btnSignatories').onclick = () => showSignatories($('signatureSettings').hidden);
-  $('btnCloseSignatories').onclick = () => showSignatories(false);
+  if ($('btnDismissSignatories')) $('btnDismissSignatories').onclick = () => showSignatories(false);
+  $('signatureSettings').addEventListener('click', e => { if (e.target === $('signatureSettings')) showSignatories(false); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('signatureSettings').hidden) showSignatories(false); });
   const editSignatories = () => {
     signatories = { principal: $('principalName').value.trim(), adviser: $('adviserName').value.trim() };
     try { localStorage.setItem('ecard:signatories:' + schoolId, JSON.stringify(signatories)); }
@@ -425,6 +435,16 @@
   };
   $('principalName').oninput = editSignatories;
   $('adviserName').oninput = editSignatories;
+  $('btnCloseSignatories').onclick = () => {
+    const btn = $('btnCloseSignatories');
+    setBtnLoading(btn, true);
+    editSignatories();
+    setTimeout(() => {
+      setBtnLoading(btn, false);
+      showSignatories(false);
+      toast('Signatories saved for ' + (cfg.school.name || 'this school') + '.');
+    }, 220);
+  };
 
   function chooseSchool(id) {
     ++loadGeneration;
@@ -441,7 +461,6 @@
     model = null; handle = null; visible = [];
     $('selStudent').innerHTML = '';
     $('btnReload').hidden = true;
-    $('cards').innerHTML = '<div class="empty no-print"><h2>Open your workbook</h2><p>Choose an Excel workbook to prepare report cards for ' + esc(cfg.school.name) + '.</p></div>';
     $('status').textContent = 'No file loaded. Open your E-CARD workbook to get started.';
     $('status').classList.toggle('err', false);
     $('workspaceLogo').src = cfg.school.logo;

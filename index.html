@@ -9,12 +9,57 @@
 </head>
 <body>
 <main id="schoolLanding" class="school-landing no-print" aria-labelledby="landingTitle">
-  <div class="landing-intro"><span class="landing-eyebrow">E-CARD · STUDENT REPORT CARDS</span><h1 id="landingTitle">Choose your school template</h1><p>Select a school, then open your Excel workbook to prepare report cards.</p></div>
-  <div class="school-choices">
-    <article class="school-choice"><img src="assets/ndp.png" alt="Notre Dame of Parang school seal"><span class="school-code">NDP</span><h2>Notre Dame of Parang, Inc.</h2><p>Mabini St., Parang, Maguindanao Del Norte</p><button id="chooseNdp" class="btn primary">Use NDP Template <span aria-hidden="true">→</span></button></article>
-    <article class="school-choice"><img src="assets/nds.png" alt="Notre Dame of Sarmiento school seal"><span class="school-code">NDS</span><h2>Notre Dame of Sarmiento, Inc.</h2><p>Sarmiento, Parang, Maguindanao Del Norte</p><button id="chooseNds" class="btn primary">Use NDS Template <span aria-hidden="true">→</span></button></article>
+  <div class="landing-shell">
+    <div class="landing-intro">
+      <span class="landing-eyebrow"><span class="eyebrow-dot" aria-hidden="true"></span>E-CARD &middot; DEPED SF9 REPORT CARD SYSTEM</span>
+      <h1 id="landingTitle">Choose your school template</h1>
+      <p>Select your institution below, then open your Excel workbook to generate and print official learner report cards.</p>
+    </div>
+    <div class="school-choices">
+      <article class="school-choice" data-school="ndp">
+        <div class="school-card-top">
+          <span class="school-code">NDP</span>
+          <span class="school-meta">Gov. Rec. No. 139 s., 1967</span>
+        </div>
+        <div class="school-seal-wrap">
+          <img src="assets/ndp.png" alt="Notre Dame of Parang school seal">
+        </div>
+        <h2>Notre Dame of Parang, Inc.</h2>
+        <p class="school-address">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>Mabini St., Parang, Maguindanao Del Norte</span>
+        </p>
+        <button id="chooseNdp" class="btn primary school-cta">
+          <span class="btn-label">Use NDP Template</span>
+          <svg class="btn-icon cta-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </button>
+      </article>
+      <article class="school-choice" data-school="nds">
+        <div class="school-card-top">
+          <span class="school-code">NDS</span>
+          <span class="school-meta">Gov. Rec. No. 40 s., 1971</span>
+        </div>
+        <div class="school-seal-wrap">
+          <img src="assets/nds.png" alt="Notre Dame of Sarmiento school seal">
+        </div>
+        <h2>Notre Dame of Sarmiento, Inc.</h2>
+        <p class="school-address">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span>Sarmiento, Parang, Maguindanao Del Norte</span>
+        </p>
+        <button id="chooseNds" class="btn primary school-cta">
+          <span class="btn-label">Use NDS Template</span>
+          <svg class="btn-icon cta-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </button>
+      </article>
+    </div>
+    <div class="landing-footer">
+      <p class="landing-note">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+        <span>Your workbook stays locally in this browser. Each school maintains its own saved workbook and signatories.</span>
+      </p>
+    </div>
   </div>
-  <p class="landing-note">Your workbook stays in this browser. Each school has its own saved workbook.</p>
 </main>
 <div id="schoolWorkspace" hidden>
 <header class="toolbar no-print">
@@ -34,8 +79,14 @@
       </div>
     </div>
     <div class="file-tools">
-      <button id="btnChangeSchool" class="btn">Change School</button>
-      <button id="btnSignatories" class="btn" aria-expanded="false" aria-controls="signatureSettings">Principal &amp; Adviser</button>
+      <button id="btnChangeSchool" class="btn">
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v5"/></svg>
+        <span class="btn-label">Change School</span>
+      </button>
+      <button id="btnSignatories" class="btn" aria-expanded="false" aria-controls="signatureSettings">
+        <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        <span class="btn-label">Principal &amp; Adviser</span>
+      </button>
       <span class="offline-badge"><span aria-hidden="true"></span>Offline workspace</span>
       <button id="btnOpen" class="btn">
         <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -91,13 +142,52 @@
   </div>
   <input id="fileFallback" type="file" accept=".xlsx,.xlsm" hidden>
 </header>
-<section id="signatureSettings" class="signature-settings no-print" aria-label="Report card signatories" hidden>
-  <label class="signature-field"><span>School Principal</span><input id="principalName" type="text" placeholder="Enter principal name" autocomplete="off"></label>
-  <label class="signature-field"><span>Class Adviser</span><input id="adviserName" type="text" placeholder="Enter adviser name" autocomplete="off"></label>
-  <p>Changes apply immediately and are saved for this school in this browser.</p>
-  <button id="btnCloseSignatories" class="btn">Done</button>
+<section id="signatureSettings" class="signature-modal-backdrop no-print" role="dialog" aria-modal="true" aria-labelledby="signatureModalTitle" hidden>
+  <div class="signature-modal">
+    <div class="signature-modal-header">
+      <div class="signature-modal-title-group">
+        <span class="signature-modal-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </span>
+        <div>
+          <h2 id="signatureModalTitle">Report Card Signatories</h2>
+          <p>Configure official names printed on every learner report card.</p>
+        </div>
+      </div>
+      <button id="btnDismissSignatories" class="btn icon-btn modal-close-btn" type="button" title="Close" aria-label="Close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="signature-modal-body">
+      <label class="signature-field">
+        <span class="signature-label">School Principal</span>
+        <div class="signature-input-wrap">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <input id="principalName" type="text" placeholder="Enter school principal name" autocomplete="off">
+        </div>
+      </label>
+      <label class="signature-field">
+        <span class="signature-label">Class Adviser</span>
+        <div class="signature-input-wrap">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <input id="adviserName" type="text" placeholder="Enter class adviser name" autocomplete="off">
+        </div>
+      </label>
+    </div>
+    <div class="signature-modal-footer">
+      <p class="signature-note">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+        <span>Changes apply immediately and are saved for this school in this browser.</span>
+      </p>
+      <div class="signature-actions">
+        <button id="btnCloseSignatories" class="btn primary" type="button">
+          <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>Save &amp; Done</span>
+        </button>
+      </div>
+    </div>
+  </div>
 </section>
-<div id="toastContainer" class="toast-container no-print" aria-live="polite"></div>
 
 <main id="cards" class="cards" tabindex="0" aria-label="Report card pages">
   <div class="empty no-print">
@@ -125,6 +215,7 @@
   </div>
 </footer>
 </div>
+<div id="toastContainer" class="toast-container no-print" aria-live="polite"></div>
 
 <script src="vendor/xlsx.full.min.js"></script>
 <script src="js/config.js"></script>
