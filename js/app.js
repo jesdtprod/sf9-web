@@ -34,15 +34,20 @@
   function showSkeleton() {
     $('cards').innerHTML = '<div class="skeleton-page no-print"><div><div class="skel-box" style="height:24px;width:45%"></div><div class="skel-box" style="height:140px"></div><div class="skel-box" style="height:180px"></div></div><div><div class="skel-box" style="height:64px"></div><div class="skel-box" style="height:160px"></div><div class="skel-box" style="height:140px"></div></div></div>';
   }
-  function showWorkbookPrompt() {
+  const formatName = mode => mode === 'terms-g11' ? '3 Semesters - G11' : mode === 'terms' ? '3 Semesters - G7-10' : '4 Quarters - G12';
+  function showWorkbookPrompt(mismatch = false) {
     $('cards').innerHTML = '<section class="workbook-welcome no-print" aria-labelledby="workbookWelcomeTitle">' +
       '<div class="workbook-school"><img src="' + esc(cfg.school.logo) + '" alt=""><div><span>REPORT CARD WORKSPACE</span><strong>' + esc(cfg.school.name) + '</strong></div></div>' +
       '<div class="workbook-welcome-body"><div class="workbook-file-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg></div>' +
-      '<h2 id="workbookWelcomeTitle">Ready to prepare your report cards?</h2><p>Open your Excel workbook to view student records,<br class="workbook-break"> preview both sides, and print your cards.</p>' +
-      '<button id="btnEmptyOpen" class="btn primary"><svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m-4 4 4-4 4 4M4 16v4h16v-4"/></svg>Open Excel File</button>' +
+      '<h2 id="workbookWelcomeTitle">' + (mismatch ? 'Open a matching workbook' : 'Ready to prepare your report cards?') + '</h2><p>' +
+      (mismatch ? 'This workbook uses a different report card format.<br class="workbook-break"> Open a matching file or return to your loaded cards.' : 'Open your Excel workbook to view student records,<br class="workbook-break"> preview both sides, and print your cards.') + '</p>' +
+      (mismatch ? '<div class="workbook-formats"><div><span>LOADED WORKBOOK</span><strong>' + esc(formatName(model.mode)) + '</strong></div><div><span>SELECTED FORMAT</span><strong>' + esc(formatName(selectedFormat())) + '</strong></div></div>' : '') +
+      '<div class="workbook-actions"><button id="btnEmptyOpen" class="btn primary"><svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m-4 4 4-4 4 4M4 16v4h16v-4"/></svg>Open Excel File</button>' +
+      (mismatch ? '<button id="btnReturnFormat" class="btn">Return to Loaded Cards</button>' : '') + '</div>' +
       '<span class="workbook-file-types">Supports .xlsx and .xlsm workbooks</span></div>' +
       '<div class="workbook-privacy"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Your workbook stays on this device.</div></section>';
     $('btnEmptyOpen').onclick = () => $('btnOpen').click();
+    if (mismatch) $('btnReturnFormat').onclick = () => { $('selFormat').value = model.mode; renderOne(); };
   }
   function setBtnLoading(btn, loading) {
     if (!btn) return;
@@ -239,7 +244,7 @@
     window.ECardDropdowns.sync();
     if (!model || !visible.length) return;
     if (selectedFormat() !== model.mode) {
-      $('cards').innerHTML = '<div class="empty no-print"><h2>Open a matching workbook</h2><p>The loaded workbook uses ' + (model.mode === 'terms-g11' ? '3 Semesters - G11' : model.mode === 'terms' ? '3 Semesters - G7-10' : '4 Quarters - G12') + '. Open a workbook for the selected format or switch back to view the current cards.</p></div>';
+      showWorkbookPrompt(true);
       return;
     }
     const st = visible[+$('selStudent').value || 0];

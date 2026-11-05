@@ -169,6 +169,12 @@ console.log('G11 mapping, blank grades, electives, averages, attendance, values,
   get('selFormat').change();
   assert.equal(get('btnPrint').disabled, true);
   assert.match(get('cards').innerHTML, /Open a matching workbook/);
+  assert.match(get('cards').innerHTML, /LOADED WORKBOOK/);
+  assert.match(get('cards').innerHTML, /SELECTED FORMAT/);
+  get('btnReturnFormat').onclick();
+  assert.equal(get('selFormat').value, 'terms-g11');
+  assert.equal(get('btnPrint').disabled, false);
+  assert.match(get('cards').innerHTML, /card-spread/);
   get('btnChangeSchool').onclick();
   assert.equal(get('schoolWorkspace').hidden, true);
   assert.equal(get('schoolLanding').hidden, false);

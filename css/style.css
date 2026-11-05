@@ -200,6 +200,11 @@ select { width:100%; min-width:0; height:100%; padding:0 28px 0 10px; border:0; 
 .workbook-welcome p { margin:0 0 24px; font-size:14px; line-height:1.65; color:#607368; }
 .workbook-welcome .btn { min-height:40px; padding:0 20px; font:600 13px "Segoe UI",Arial,sans-serif; }
 .workbook-file-types { margin-top:12px; font-size:11px; color:#7b8b81; }
+.workbook-formats { display:grid; grid-template-columns:1fr 1fr; gap:20px; width:100%; margin:0 0 24px; padding:16px; border:1px solid #e1eae4; border-radius:12px; background:#f8fbf9; text-align:left; }
+.workbook-formats div { display:flex; flex-direction:column; gap:7px; }
+.workbook-formats span { color:#74867a; font-size:9px; font-weight:700; letter-spacing:1px; }
+.workbook-formats strong { font-size:13px; font-weight:600; }
+.workbook-actions { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; }
 .workbook-privacy { display:flex; align-items:center; justify-content:center; gap:7px; padding:14px 20px; border-top:1px solid #edf2ee; background:#fafcfb; color:#6a7f71; font-size:11px; }
 .workbook-privacy svg { width:13px; height:13px; fill:none; stroke:currentColor; stroke-width:1.6; stroke-linecap:round; }
 @media(max-width:480px) { .workbook-school { padding:16px 20px; } .workbook-welcome-body { padding:28px 20px; } .workbook-welcome h2 { font-size:21px; } .workbook-break { display:none; } }
