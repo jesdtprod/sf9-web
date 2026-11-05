@@ -9,6 +9,7 @@ const cfg = context.window.ECARD_CONFIG;
 const sheet = rows => X.utils.aoa_to_sheet(rows);
 const base = () => ({ Sheets: {
   Students: sheet([[], [], [], [null, 'TEST-1', 'TEST ONLY', '09/11/2009', 'FEMALE', '2026-2027', 'K to 12', 'GRADE 11', 'TEST SECTION']]),
+  'CARD FRONT': sheet([[], [], ['TEST ONLY ADVISER', null, 'TEST ONLY PRINCIPAL'], ['Class Adviser', null, 'School Principal']]),
   'Core Values': sheet([[], [], [], [null, 'TEST-1', 'TEST ONLY', 'SO', 'AO', 'RO']]),
   Attendance: sheet([[null, null, null, 'JUNE'], [], [], [null, 'TEST-1', 'TEST ONLY', 20, 19, 1]])
 } });
@@ -19,6 +20,8 @@ wb.Sheets.Other_Subjects = sheet([[null, null, null, null, 'Conduct', null, null
 let model = E.parse(X, wb, cfg), card = E.buildCard(model, model.students[0], cfg);
 assert.equal(model.mode, 'terms-g11');
 assert.equal(card.student.sex, 'FEMALE');
+assert.equal(card.adviser, 'TEST ONLY ADVISER');
+assert.equal(card.principal, 'TEST ONLY PRINCIPAL');
 assert.deepEqual(card.terms.subjects[0].grades, [90, null, 80]);
 assert.equal(card.terms.subjects[0].final, 85);
 assert.deepEqual(card.terms.subjects.slice(1, 6).map(s => s.grades), [[86, null, null], [87, null, null], [null, 88, null], [null, 89, null], [null, null, 91]]);
@@ -40,6 +43,7 @@ for (const name of ['1st Sem', '2nd Sem']) quarters.Sheets[name] = sheet([[null,
 model = E.parse(X, quarters, cfg);
 assert.equal(model.mode, 'quarters');
 assert.equal(E.buildCard(model, model.students[0], cfg).sem1.groups[0].subjects[0].final, 85);
+assert.equal(E.buildCard(model, model.students[0], cfg).principal, 'TEST ONLY PRINCIPAL');
 
 // Optional private workbook validation: never copy its data into the repository.
 if (process.argv[2]) {
@@ -90,22 +94,46 @@ console.log('G11 mapping, blank grades, electives, averages, attendance, values,
       dataset: {}, style: { setProperty() {} }, classList: { toggle() {} },
       clientWidth: 1200, clientHeight: 900, scrollHeight: 1800, scrollTop: 0,
       addEventListener(name, fn) { this[name] = fn; },
-      prepend() {}, querySelector() { return null; }, querySelectorAll() { return []; },
+      focus() {}, prepend() {}, querySelector() { return null; }, querySelectorAll() { return []; },
       set innerHTML(html) { this.html = html; if (id.startsWith('sel')) this.value = html.match(/value="([^"]*)"/)?.[1] || ''; },
       get innerHTML() { return this.html || ''; }
     });
     return elements.get(id);
   };
   let printed = 0;
+  const cache = new Map();
+  const indexedDB = { open() {
+    const request = {};
+    request.result = { transaction() {
+      const transaction = { objectStore() { return {
+        get(key) { const query = {}; queueMicrotask(() => { query.result = cache.get(key); query.onsuccess(); }); return query; },
+        put(value, key) { cache.set(key, value); queueMicrotask(() => transaction.oncomplete()); }
+      }; } };
+      return transaction;
+    } };
+    queueMicrotask(() => request.onsuccess());
+    return request;
+  } };
   const browser = { ECARD_CONFIG: cfg, ECard: E, ECardDropdowns: { sync() {} },
     addEventListener() {}, print() { printed++; } };
   const sandbox = { window: browser, document: { getElementById: get, addEventListener() {}, createElement() { return {}; } },
-    XLSX: X, requestAnimationFrame() {}, setTimeout() {}, ResizeObserver: class { observe() {} } };
+    indexedDB, XLSX: X, requestAnimationFrame() {}, setTimeout() {}, ResizeObserver: class { observe() {} } };
   vm.runInNewContext(fs.readFileSync(require.resolve('../js/app.js'), 'utf8'), sandbox);
+  get('chooseNdp').onclick();
+  assert.equal(get('schoolWorkspace').hidden, false);
+  assert.equal(get('schoolLanding').hidden, true);
+  assert.equal(get('schoolFavicon').href, 'assets/ndp.png');
   const bytes = X.write({ ...wb, SheetNames: Object.keys(wb.Sheets) }, { type: 'buffer', bookType: 'xlsx' });
   await get('fileFallback').onchange({ target: { files: [{ name: 'TEST ONLY.xlsx', arrayBuffer: async () => bytes }], value: '' } });
   assert.equal(get('selFormat').value, 'terms-g11');
+  assert.equal(cache.get('workbook:ndp').name, 'TEST ONLY.xlsx');
   assert.match(get('status').textContent, /loaded/i);
+  assert.match(get('cards').innerHTML, /Notre Dame of Parang, Inc./);
+  assert.match(get('cards').innerHTML, /Mabini St., Parang/);
+  assert.match(get('cards').innerHTML, /Government Recognition No. 139 s., 1967/);
+  assert.match(get('cards').innerHTML, /assets\/ndp.png/);
+  assert.match(get('cards').innerHTML, /TEST ONLY PRINCIPAL/);
+  assert.match(get('cards').innerHTML, /TEST ONLY ADVISER/);
   assert.match(get('cards').innerHTML, /SENIOR HIGH SCHOOL/);
   assert.match(get('cards').innerHTML, /SF 9-SHS/);
   assert.match(get('cards').innerHTML, /Core Subjects/);
@@ -126,5 +154,19 @@ console.log('G11 mapping, blank grades, electives, averages, attendance, values,
   get('selFormat').change();
   assert.equal(get('btnPrint').disabled, true);
   assert.match(get('cards').innerHTML, /Open a matching workbook/);
+  get('btnChangeSchool').onclick();
+  assert.equal(get('schoolWorkspace').hidden, true);
+  assert.equal(get('schoolLanding').hidden, false);
+  get('chooseNds').onclick();
+  assert.equal(get('schoolFavicon').href, 'assets/nds.png');
+  assert.doesNotMatch(get('cards').innerHTML, /TEST ONLY/);
+  await get('fileFallback').onchange({ target: { files: [{ name: 'TEST ONLY NDS.xlsx', arrayBuffer: async () => bytes }], value: '' } });
+  assert.equal(cache.get('workbook:nds').name, 'TEST ONLY NDS.xlsx');
+  assert.equal(cache.get('workbook:ndp').name, 'TEST ONLY.xlsx');
+  assert.match(get('cards').innerHTML, /Notre Dame of Sarmiento, Inc./);
+  assert.match(get('cards').innerHTML, /Government Recognition No. 40 s., 1971/);
+  assert.match(get('cards').innerHTML, /assets\/nds.png/);
+  assert.doesNotMatch(get('cards').innerHTML, /Notre Dame of Parang/);
+  console.log('School selection, branding, favicon, switching and workbook signatures passed.');
   console.log('App HTML, format selection, term views, print handlers and incompatible format checks passed (no visual browser check).');
 })().catch(error => { console.error(error); process.exitCode = 1; });

@@ -4,18 +4,27 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>E-Card DepEd SF9</title>
-<link rel="icon" type="image/png" href="assets/school.png">
+<link id="schoolFavicon" rel="icon" type="image/png" href="assets/deped.png">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<main id="schoolLanding" class="school-landing no-print" aria-labelledby="landingTitle">
+  <div class="landing-intro"><span class="landing-eyebrow">E-CARD · STUDENT REPORT CARDS</span><h1 id="landingTitle">Choose your school template</h1><p>Select a school, then open your Excel workbook to prepare report cards.</p></div>
+  <div class="school-choices">
+    <article class="school-choice"><img src="assets/ndp.png" alt="Notre Dame of Parang school seal"><span class="school-code">NDP</span><h2>Notre Dame of Parang, Inc.</h2><p>Mabini St., Parang, Maguindanao Del Norte</p><button id="chooseNdp" class="btn primary">Use NDP Template <span aria-hidden="true">→</span></button></article>
+    <article class="school-choice"><img src="assets/nds.png" alt="Notre Dame of Sarmiento school seal"><span class="school-code">NDS</span><h2>Notre Dame of Sarmiento, Inc.</h2><p>Sarmiento, Parang, Maguindanao Del Norte</p><button id="chooseNds" class="btn primary">Use NDS Template <span aria-hidden="true">→</span></button></article>
+  </div>
+  <p class="landing-note">Your workbook stays in this browser. Each school has its own saved workbook.</p>
+</main>
+<div id="schoolWorkspace" hidden>
 <header class="toolbar no-print">
   <div class="toolbar-top">
     <div class="brand-group">
       <div class="brand">
-        <span class="brand-mark" aria-hidden="true">E</span>
+        <img id="workspaceLogo" class="workspace-logo" src="assets/deped.png" alt="">
         <div class="brand-text">
           <span class="brand-title">E-Card</span>
-          <span class="brand-caption">Student Report Cards</span>
+          <span id="workspaceSchool" class="brand-caption">Student Report Cards</span>
         </div>
       </div>
       <span class="divider" aria-hidden="true"></span>
@@ -25,6 +34,7 @@
       </div>
     </div>
     <div class="file-tools">
+      <button id="btnChangeSchool" class="btn">Change School</button>
       <span class="offline-badge"><span aria-hidden="true"></span>Offline workspace</span>
       <button id="btnOpen" class="btn">
         <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -107,6 +117,7 @@
     </div>
   </div>
 </footer>
+</div>
 
 <script src="vendor/xlsx.full.min.js"></script>
 <script src="js/config.js"></script>

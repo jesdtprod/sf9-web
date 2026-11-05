@@ -8,6 +8,7 @@
   const fmtFinal = n => n == null ? '' : Number(fmt(n)).toFixed(2);
 
   let model = null, handle = null, visible = [];   // students in the loaded workbook
+  let schoolId = null;
   let loadGeneration = 0, saveQueue = Promise.resolve();
 
   /* ---------- status & centralized toast ---------- */
@@ -72,9 +73,10 @@
 
   function rememberWorkbook(buffer, name, chosenHandle) {
     // Keep the bytes and their own handle together, in the same database record.
+    const cacheKey = 'workbook:' + schoolId;
     const save = async () => {
-      let saved = await DB.set('workbook', { buffer, name, handle: chosenHandle || null });
-      if (!saved && chosenHandle) saved = await DB.set('workbook', { buffer, name, handle: null });
+      let saved = await DB.set(cacheKey, { buffer, name, handle: chosenHandle || null });
+      if (!saved && chosenHandle) saved = await DB.set(cacheKey, { buffer, name, handle: null });
       return saved;
     };
     saveQueue = saveQueue.then(save, save);
@@ -148,9 +150,10 @@
     if (handle) readHandle(handle, generation); else $('fileFallback').click();
   };
 
-  (async function restore() {
+  async function restore() {
     const generation = loadGeneration;
-    const [cached, legacyHandle] = await Promise.all([DB.get('workbook'), DB.get('handle')]);
+    const [saved, legacy, legacyHandle] = await Promise.all([DB.get('workbook:' + schoolId), schoolId === 'nds' ? DB.get('workbook') : null, schoolId === 'nds' ? DB.get('handle') : null]);
+    const cached = saved || legacy;
     if (model || generation !== loadGeneration || !cached) return;
     // Legacy records stored their handle separately; newly saved records bind it to the bytes.
     const savedHandle = Object.prototype.hasOwnProperty.call(cached, 'handle') ? cached.handle : legacyHandle;
@@ -169,7 +172,7 @@
     } catch (e) {
       if (generation === loadGeneration) status('Showing the saved workbook. The original file is unavailable; open it again to update.');
     }
-  })();
+  }
 
   /* ---------- section / student pickers ---------- */
   const secLabel = s => [s.grade, s.section].filter(Boolean).join(' \u2013 ') || '(no section)';
@@ -200,8 +203,8 @@
     }
     $('cardViewField').hidden = false;
     const incompatible = !!model && selectedFormat() !== model.mode;
-    $('btnPrint').disabled = incompatible;
-    $('btnPrintAll').disabled = incompatible;
+    $('btnPrint').disabled = !model || incompatible;
+    $('btnPrintAll').disabled = !model || incompatible;
     const index = $('selStudent').selectedIndex;
     $('btnPrev').disabled = !model || incompatible || index <= 0;
     $('btnNext').disabled = !model || incompatible || index < 0 || index >= visible.length - 1;
@@ -248,7 +251,7 @@
   }
 
   function frontPage(c) {
-    const s = c.student, sc = Object.assign({}, cfg.school, isTerms(c) ? { subtitle: c.mode === 'terms-g11' ? 'Senior High School' : 'Junior High School', title: "LEARNER'S PROGRESS REPORT CARD", adviser: c.adviser || '', principal: c.principal || '' } : {});
+    const s = c.student, sc = Object.assign({}, cfg.school, { adviser: c.adviser || '', principal: c.principal || '' }, isTerms(c) ? { subtitle: c.mode === 'terms-g11' ? 'Senior High School' : 'Junior High School', title: "LEARNER'S PROGRESS REPORT CARD", adviser: c.adviser || '', principal: c.principal || '' } : {});
     const blank = '<span class="write-line"></span>';
     return '<section class="page front' + (isTerms(c) ? ' term-front' : '') + '">' +
       '<div class="col front-records">' +
@@ -264,7 +267,7 @@
         '<div class="cancellation-approval"><span>Approved by:</span><div>' + blank + '<b>School Principal</b></div></div>' +
       '</div>' +
       '<div class="col front-cover">' +
-        '<div class="front-school"><div class="school-emblem"><span>' + (c.mode === 'terms' ? 'SF 9-JHS' : 'SF 9-SHS') + '</span><img src="assets/deped.png" alt="School seal"></div><div class="school-name"><h2>' + esc(sc.name) + '</h2><div>' + esc(sc.address) + '</div>' + (isTerms(c) ? '<div class="school-recognition">Government Recognition No. 40 s., 1971</div>' : '') + '<h3>' + esc(sc.subtitle.toUpperCase()) + '</h3></div><img class="school-seal" src="assets/school.png" alt="School seal"></div>' +
+        '<div class="front-school"><div class="school-emblem"><span>' + (c.mode === 'terms' ? 'SF 9-JHS' : 'SF 9-SHS') + '</span><img src="assets/deped.png" alt="School seal"></div><div class="school-name"><h2>' + esc(sc.name) + '</h2><div>' + esc(sc.address) + '</div>' + '<div class="school-recognition">' + esc(sc.recognition) + '</div>' + '<h3>' + esc(sc.subtitle.toUpperCase()) + '</h3></div><img class="school-seal" src="' + esc(sc.logo) + '" alt="' + esc(sc.name) + ' seal"></div>' +
         '<h1 class="front-card-title">' + esc(sc.title) + (isTerms(c) && s.schoolYear ? '<span class="term-school-year">School Year ' + esc(s.schoolYear) + '</span>' : '') + '</h1>' +
         '<div class="info front-info">' +
           (isTerms(c)
@@ -395,6 +398,39 @@
       ? 'page-view ' + selectedView + '-values-only' : isTerms(c) && term >= 2 ? 'page-view term-' + term + '-values-only' : 'page-view';
     return '<div class="' + viewClass + '">' + frontPage(c) + '</div><div class="' + viewClass + '">' + backPage(c) + '</div>';
   }
+
+  function chooseSchool(id) {
+    ++loadGeneration;
+    schoolId = id;
+    Object.assign(cfg.school, cfg.templates[id]);
+    model = null; handle = null; visible = [];
+    $('selStudent').innerHTML = '';
+    $('btnReload').hidden = true;
+    $('cards').innerHTML = '<div class="empty no-print"><h2>Open your workbook</h2><p>Choose an Excel workbook to prepare report cards for ' + esc(cfg.school.name) + '.</p></div>';
+    $('status').textContent = 'No file loaded. Open your E-CARD workbook to get started.';
+    $('status').classList.toggle('err', false);
+    $('workspaceLogo').src = cfg.school.logo;
+    $('workspaceLogo').alt = cfg.school.name + ' seal';
+    $('workspaceSchool').textContent = cfg.school.name;
+    $('schoolFavicon').href = cfg.school.logo;
+    document.title = 'E-Card | ' + cfg.school.name;
+    $('schoolLanding').hidden = true;
+    $('schoolWorkspace').hidden = false;
+    updateNavigation();
+    fitPreview();
+    restore();
+  }
+  $('chooseNdp').onclick = () => chooseSchool('ndp');
+  $('chooseNds').onclick = () => chooseSchool('nds');
+  $('btnChangeSchool').onclick = () => {
+    ++loadGeneration;
+    model = null; handle = null; visible = [];
+    $('schoolWorkspace').hidden = true;
+    $('schoolLanding').hidden = false;
+    $('schoolFavicon').href = 'assets/deped.png';
+    document.title = 'E-Card DepEd SF9';
+    $('chooseNdp').focus();
+  };
 
   // Fit the preview to the space below the toolbar; paper dimensions stay fixed.
   const preview = $('cards');

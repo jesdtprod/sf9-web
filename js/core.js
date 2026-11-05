@@ -102,7 +102,23 @@
       if (!m || m.toUpperCase() === 'TOTAL') break;
       months.push({ name: m, col: c });
     }
-    const shared = { mode, students, values: indexRows(vRows, 3, 2, 1),
+    const front = wb.Sheets['CARD FRONT'];
+    const signature = role => {
+      if (!front) return '';
+      const labels = Object.keys(front).filter(address => /^[A-Z]+\d+$/.test(address) && role.test(norm(front[address].v)))
+        .sort((a, b) => XLSX.utils.decode_cell(b).r - XLSX.utils.decode_cell(a).r);
+      for (const address of labels) {
+        const pos = XLSX.utils.decode_cell(address);
+        // Signature names sit above their role label, including merged signature cells.
+        for (let offset = 1; offset <= 3; offset++) {
+          if (pos.r < offset) break;
+          const value = norm(front[XLSX.utils.encode_cell({ r: pos.r - offset, c: pos.c })]?.v);
+          if (value && !/:$/.test(value) && !/^(school principal|class adviser|approved by)$/i.test(value)) return value;
+        }
+      }
+      return '';
+    };
+    const shared = { mode, students, adviser: signature(/^(class\s+)?advis[eo]r$/i), principal: signature(/^(school\s+)?principal$/i), values: indexRows(vRows, 3, 2, 1),
       attendance: Object.assign({ months }, indexRows(aRows, 3, 2, 1)) };
     if (mode === 'terms-g11') {
       const gradeSheets = g11Sheets.map((name, i) => {
@@ -122,9 +138,7 @@
         }
         return Object.assign({ title: ['Core Subjects', 'Elective Subjects', 'Other Subjects'][i], subjects }, indexRows(rows, 2, 3, 2));
       });
-      const front = wb.Sheets['CARD FRONT'];
-      return Object.assign(shared, { gradeSheets, termValues: readTermValues(wb, cfg),
-        adviser: norm(front && front.Q29 && front.Q29.v), principal: norm(front && front.N34 && front.N34.v) });
+      return Object.assign(shared, { gradeSheets, termValues: readTermValues(wb, cfg) });
     }
     if (mode === 'terms') {
       const termSheets = ['TERM 1', 'TERM 2', 'TERM 3', 'FINAL'].map(name => {
@@ -136,9 +150,7 @@
       const subjects = headers.slice(4, averageCol < 0 ? headers.length : averageCol).map((name, i) => ({
         name: norm(name), col: 4 + i
       })).filter(subject => subject.name && !/^rank$/i.test(subject.name));
-      const front = wb.Sheets['CARD FRONT'];
-      return Object.assign(shared, { termSheets, subjects, averageCol, termValues: readTermValues(wb, cfg), adviser: norm(front && front.Q29 && front.Q29.v),
-        principal: norm(front && front.N34 && front.N34.v) });
+      return Object.assign(shared, { termSheets, subjects, averageCol, termValues: readTermValues(wb, cfg) });
     }
     return Object.assign(shared, {
       sem1: readSem(sheetRows(XLSX, wb, S.sem1)),
