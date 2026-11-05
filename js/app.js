@@ -402,7 +402,7 @@
     const c = card.mode === 'quarters' && quarter ? quarterCard(card, quarter) : isTerms(card) && term ? termCard(card, term) : card;
     const viewClass = c.mode === 'quarters' && (quarter >= 2 && quarter <= 4)
       ? 'page-view ' + selectedView + '-values-only' : isTerms(c) && term >= 2 ? 'page-view term-' + term + '-values-only' : 'page-view';
-    return '<div class="' + viewClass + '">' + frontPage(c) + '</div><div class="' + viewClass + '">' + backPage(c) + '</div>';
+    return '<div class="card-spread"><div class="' + viewClass + '">' + frontPage(c) + '</div><div class="' + viewClass + '">' + backPage(c) + '</div></div>';
   }
 
   function fillSignatories() {
@@ -472,7 +472,7 @@
   let userZoom = null; // null = fit whole page; otherwise a scale (1 = 100%)
   const zoomRange = $('zoomRange'), zoomValue = $('zoomValue');
   function fitScale() {
-    return Math.min(1, Math.max(1, preview.clientWidth - 48) / 1056, Math.max(1, preview.clientHeight - 32) / 816);
+    return Math.min(1, Math.max(1, preview.clientWidth - 48) / (1056 * 2), Math.max(1, preview.clientHeight - 32) / 816);
   }
   function fitPreview() {
     const scale = userZoom === null ? fitScale() : userZoom;
@@ -491,7 +491,7 @@
     userZoom = z === null ? null : Math.min(3, Math.max(0.25, z));
     fitPreview();
     if (userZoom === null) {
-      const n = preview.querySelectorAll('.page-view').length;
+      const n = preview.querySelectorAll('.card-spread').length;
       preview.scrollTop = Math.round(keep * n) * preview.clientHeight;
     } else preview.scrollTop = keep * preview.scrollHeight;
   }
@@ -505,7 +505,7 @@
   preview.addEventListener('wheel', event => {
     if (event.ctrlKey) { event.preventDefault(); setZoom(curScale() + (event.deltaY < 0 ? 0.1 : -0.1)); return; }
     if (userZoom !== null) return; // zoomed: normal scrolling
-    if (!preview.querySelector('.page-view') || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+    if (!preview.querySelector('.card-spread') || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
     event.preventDefault();
     const now = performance.now();
     if (now < wheelLockedUntil) return;
@@ -514,7 +514,7 @@
     wheelTotal += event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? preview.clientHeight : 1);
     if (Math.abs(wheelTotal) < 35) return;
     const current = Math.round(preview.scrollTop / preview.clientHeight);
-    const next = Math.max(0, Math.min(preview.querySelectorAll('.page-view').length - 1, current + Math.sign(wheelTotal)));
+    const next = Math.max(0, Math.min(preview.querySelectorAll('.card-spread').length - 1, current + Math.sign(wheelTotal)));
     wheelTotal = 0;
     wheelLockedUntil = now + 600;
     preview.scrollTo({ top: next * preview.clientHeight, behavior: 'smooth' });

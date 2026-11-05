@@ -119,7 +119,7 @@ console.log('G11 mapping, blank grades, electives, averages, attendance, values,
   const names = new Map();
   const localStorage = { getItem: key => names.get(key) || null, setItem: (key, value) => names.set(key, value) };
   const sandbox = { window: browser, localStorage, document: { getElementById: get, addEventListener() {}, createElement() { return {}; } },
-    indexedDB, XLSX: X, requestAnimationFrame() {}, setTimeout() {}, ResizeObserver: class { observe() {} } };
+    indexedDB, XLSX: X, requestAnimationFrame() {}, setTimeout(fn) { fn(); }, ResizeObserver: class { observe() {} } };
   vm.runInNewContext(fs.readFileSync(require.resolve('../js/app.js'), 'utf8'), sandbox);
   get('chooseNdp').onclick();
   assert.equal(get('schoolWorkspace').hidden, false);
@@ -137,6 +137,8 @@ console.log('G11 mapping, blank grades, electives, averages, attendance, values,
   assert.match(get('cards').innerHTML, /TEST ONLY PRINCIPAL/);
   assert.match(get('cards').innerHTML, /TEST ONLY ADVISER/);
   assert.match(get('cards').innerHTML, /SENIOR HIGH SCHOOL/);
+  assert.match(get('cards').innerHTML, /^<div class="card-spread">/);
+  assert.ok(get('cards').innerHTML.indexOf('page front') < get('cards').innerHTML.indexOf('page back'));
   assert.match(get('cards').innerHTML, /SF 9-SHS/);
   assert.match(get('cards').innerHTML, /Core Subjects/);
   assert.match(get('cards').innerHTML, /Elective Subjects/);
