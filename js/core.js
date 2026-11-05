@@ -200,7 +200,7 @@
           const grades = subject.cols.map(col => { const n = row && col != null ? num(row[col]) : null; return n === 0 ? null : n; });
           const filled = grades.filter(n => n != null);
           const final = filled.length ? filled.reduce((a, b) => a + b, 0) / filled.length : null;
-          return { name: subject.name, group: sheet.title, grades, final,
+          return { name: subject.name, group: sheet.title, grades, final, activeTerms: subject.cols.map(col => col != null),
             remark: final == null ? '' : final > 74.4 ? 'PASSED' : 'FAILED' };
         });
       });

@@ -287,6 +287,7 @@ tr.grp td { background:var(--soft); font-weight:700; }
 .g11 .term-grades { height:82%; }
 .g11 .term-grades td { font-size:7.5pt; }
 .g11 .term-average { height:24px; }
+.term-grades td.unused-term { background:#666; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
 
 /* Terms 2 and 3 print only new values over the previously printed card. */
 .term-2-values-only .page *, .term-3-values-only .page *,

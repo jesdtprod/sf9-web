@@ -307,14 +307,14 @@
 
   function termBackPage(c) {
     const gradeCell = (value, cls) => '<td class="' + cls + '"><span class="back-text">' + esc(value) + '</span></td>';
-    const gradeRow = (name, grades, final, remarks, average) => '<tr' + (average ? ' class="term-average"' : '') + '>' +
-      gradeCell(name, 'l ' + (/^(music|arts|p\.?e\.?|health)$/i.test(name) ? 'term-component' : 'term-learning-area')) + grades.map(n => gradeCell(average ? fmtFinal(n) : (n == null ? '' : String(n)), 'c')).join('') +
+    const gradeRow = (name, grades, final, remarks, average, activeTerms) => '<tr' + (average ? ' class="term-average"' : '') + '>' +
+      gradeCell(name, 'l ' + (/^(music|arts|p\.?e\.?|health)$/i.test(name) ? 'term-component' : 'term-learning-area')) + grades.map((n, i) => gradeCell(average ? fmtFinal(n) : (n == null ? '' : String(n)), 'c' + (activeTerms && !activeTerms[i] ? ' unused-term' : ''))).join('') +
       gradeCell(average || c.mode === 'terms-g11' ? fmtFinal(final) : '', 'c') + gradeCell(average || c.mode === 'terms-g11' ? remarks : '', 'c ' + (remarks === 'FAILED' ? 'fail' : '')) + '</tr>';
     let group = '';
     const rows = c.terms.subjects.map(subject => {
       const heading = subject.group && subject.group !== group ? '<tr class="grp"><td colspan="6">' + esc(subject.group) + '</td></tr>' : '';
       group = subject.group;
-      return heading + gradeRow(subject.name, subject.grades, subject.final, subject.remark, false);
+      return heading + gradeRow(subject.name, subject.grades, subject.final, subject.remark, false, subject.activeTerms);
     }).join('') +
       gradeRow('Average', c.terms.averages.slice(0, 3), c.terms.averages[3], c.terms.remark, true);
     const markings = cfg.markings.map(m => '<tr><td>' + esc(m[0]) + '</td><td>' + esc(m[1]) + '</td></tr>').join('');
