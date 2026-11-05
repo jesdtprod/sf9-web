@@ -9,6 +9,7 @@
 
   let model = null, handle = null, visible = [];   // students in the loaded workbook
   let schoolId = null;
+  let signatories = null;
   let loadGeneration = 0, saveQueue = Promise.resolve();
 
   /* ---------- status & centralized toast ---------- */
@@ -60,6 +61,10 @@
       const nextModel = E.parse(XLSX, wb, cfg);
       if (generation !== loadGeneration) return false;
       model = nextModel;
+      if (!signatories) {
+        signatories = { principal: model.principal || '', adviser: model.adviser || '' };
+        fillSignatories();
+      }
       $('selFormat').value = model.mode;
       fillStudents();
       updateNavigation();
@@ -390,6 +395,7 @@
   }
 
   function cardHtml(card) {
+    card = { ...card, ...signatories };
     const selectedView = $('selCardView').value;
     const quarter = { q1: 1, q2: 2, q3: 3, q4: 4 }[selectedView];
     const term = { t1: 1, t2: 2, t3: 3 }[selectedView];
@@ -399,9 +405,38 @@
     return '<div class="' + viewClass + '">' + frontPage(c) + '</div><div class="' + viewClass + '">' + backPage(c) + '</div>';
   }
 
+  function fillSignatories() {
+    $('principalName').value = signatories ? signatories.principal : '';
+    $('adviserName').value = signatories ? signatories.adviser : '';
+  }
+  function showSignatories(show) {
+    $('signatureSettings').hidden = !show;
+    $('btnSignatories').setAttribute('aria-expanded', String(show));
+    if (show) $('principalName').focus();
+    else $('btnSignatories').focus();
+  }
+  $('btnSignatories').onclick = () => showSignatories($('signatureSettings').hidden);
+  $('btnCloseSignatories').onclick = () => showSignatories(false);
+  const editSignatories = () => {
+    signatories = { principal: $('principalName').value.trim(), adviser: $('adviserName').value.trim() };
+    try { localStorage.setItem('ecard:signatories:' + schoolId, JSON.stringify(signatories)); }
+    catch (e) { status('Names updated for this visit, but browser storage is unavailable.', true); }
+    renderOne();
+  };
+  $('principalName').oninput = editSignatories;
+  $('adviserName').oninput = editSignatories;
+
   function chooseSchool(id) {
     ++loadGeneration;
     schoolId = id;
+    signatories = null;
+    try {
+      const saved = JSON.parse(localStorage.getItem('ecard:signatories:' + id));
+      if (saved && typeof saved.principal === 'string' && typeof saved.adviser === 'string') signatories = saved;
+    } catch (e) { /* Names remain editable when browser storage is unavailable. */ }
+    fillSignatories();
+    $('signatureSettings').hidden = true;
+    $('btnSignatories').setAttribute('aria-expanded', 'false');
     Object.assign(cfg.school, cfg.templates[id]);
     model = null; handle = null; visible = [];
     $('selStudent').innerHTML = '';

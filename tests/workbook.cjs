@@ -94,7 +94,7 @@ console.log('G11 mapping, blank grades, electives, averages, attendance, values,
       dataset: {}, style: { setProperty() {} }, classList: { toggle() {} },
       clientWidth: 1200, clientHeight: 900, scrollHeight: 1800, scrollTop: 0,
       addEventListener(name, fn) { this[name] = fn; },
-      focus() {}, prepend() {}, querySelector() { return null; }, querySelectorAll() { return []; },
+      setAttribute() {}, focus() {}, prepend() {}, querySelector() { return null; }, querySelectorAll() { return []; },
       set innerHTML(html) { this.html = html; if (id.startsWith('sel')) this.value = html.match(/value="([^"]*)"/)?.[1] || ''; },
       get innerHTML() { return this.html || ''; }
     });
@@ -116,7 +116,9 @@ console.log('G11 mapping, blank grades, electives, averages, attendance, values,
   } };
   const browser = { ECARD_CONFIG: cfg, ECard: E, ECardDropdowns: { sync() {} },
     addEventListener() {}, print() { printed++; } };
-  const sandbox = { window: browser, document: { getElementById: get, addEventListener() {}, createElement() { return {}; } },
+  const names = new Map();
+  const localStorage = { getItem: key => names.get(key) || null, setItem: (key, value) => names.set(key, value) };
+  const sandbox = { window: browser, localStorage, document: { getElementById: get, addEventListener() {}, createElement() { return {}; } },
     indexedDB, XLSX: X, requestAnimationFrame() {}, setTimeout() {}, ResizeObserver: class { observe() {} } };
   vm.runInNewContext(fs.readFileSync(require.resolve('../js/app.js'), 'utf8'), sandbox);
   get('chooseNdp').onclick();
@@ -150,6 +152,17 @@ console.log('G11 mapping, blank grades, electives, averages, attendance, values,
   }
   get('btnPrintAll').onclick();
   assert.equal(printed, 5);
+  get('btnSignatories').onclick();
+  assert.equal(get('signatureSettings').hidden, false);
+  get('principalName').value = 'EDITED NDP PRINCIPAL';
+  get('adviserName').value = 'EDITED NDP ADVISER';
+  get('principalName').oninput();
+  assert.match(get('cards').innerHTML, /EDITED NDP PRINCIPAL/);
+  assert.match(get('cards').innerHTML, /EDITED NDP ADVISER/);
+  get('btnPrintAll').onclick();
+  assert.match(get('cards').innerHTML, /EDITED NDP PRINCIPAL/);
+  get('btnCloseSignatories').onclick();
+  assert.equal(get('signatureSettings').hidden, true);
   get('selFormat').value = 'quarters';
   get('selFormat').change();
   assert.equal(get('btnPrint').disabled, true);
@@ -158,6 +171,7 @@ console.log('G11 mapping, blank grades, electives, averages, attendance, values,
   assert.equal(get('schoolWorkspace').hidden, true);
   assert.equal(get('schoolLanding').hidden, false);
   get('chooseNds').onclick();
+  assert.equal(get('principalName').value, '');
   assert.equal(get('schoolFavicon').href, 'assets/nds.png');
   assert.doesNotMatch(get('cards').innerHTML, /TEST ONLY/);
   await get('fileFallback').onchange({ target: { files: [{ name: 'TEST ONLY NDS.xlsx', arrayBuffer: async () => bytes }], value: '' } });
@@ -167,6 +181,20 @@ console.log('G11 mapping, blank grades, electives, averages, attendance, values,
   assert.match(get('cards').innerHTML, /Government Recognition No. 40 s., 1971/);
   assert.match(get('cards').innerHTML, /assets\/nds.png/);
   assert.doesNotMatch(get('cards').innerHTML, /Notre Dame of Parang/);
+  assert.doesNotMatch(get('cards').innerHTML, /EDITED NDP/);
+  get('adviserName').value = '';
+  get('adviserName').oninput();
+  assert.doesNotMatch(get('cards').innerHTML, /TEST ONLY ADVISER/);
+  get('chooseNdp').onclick();
+  assert.equal(get('principalName').value, 'EDITED NDP PRINCIPAL');
+  assert.equal(get('adviserName').value, 'EDITED NDP ADVISER');
+  const withoutFront = { ...wb, Sheets: { ...wb.Sheets } };
+  delete withoutFront.Sheets['CARD FRONT'];
+  const noFrontBytes = X.write({ ...withoutFront, SheetNames: Object.keys(withoutFront.Sheets) }, { type: 'buffer', bookType: 'xlsx' });
+  await get('fileFallback').onchange({ target: { files: [{ name: 'TEST ONLY NO FRONT.xlsx', arrayBuffer: async () => noFrontBytes }], value: '' } });
+  assert.match(get('cards').innerHTML, /EDITED NDP PRINCIPAL/);
+  assert.match(get('cards').innerHTML, /EDITED NDP ADVISER/);
+  console.log('Editable signatories, saved school isolation, clearing, printing and workbook without CARD FRONT passed.');
   console.log('School selection, branding, favicon, switching and workbook signatures passed.');
   console.log('App HTML, format selection, term views, print handlers and incompatible format checks passed (no visual browser check).');
 })().catch(error => { console.error(error); process.exitCode = 1; });

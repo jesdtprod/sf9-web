@@ -35,6 +35,7 @@
     </div>
     <div class="file-tools">
       <button id="btnChangeSchool" class="btn">Change School</button>
+      <button id="btnSignatories" class="btn" aria-expanded="false" aria-controls="signatureSettings">Principal &amp; Adviser</button>
       <span class="offline-badge"><span aria-hidden="true"></span>Offline workspace</span>
       <button id="btnOpen" class="btn">
         <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -90,6 +91,12 @@
   </div>
   <input id="fileFallback" type="file" accept=".xlsx,.xlsm" hidden>
 </header>
+<section id="signatureSettings" class="signature-settings no-print" aria-label="Report card signatories" hidden>
+  <label class="signature-field"><span>School Principal</span><input id="principalName" type="text" placeholder="Enter principal name" autocomplete="off"></label>
+  <label class="signature-field"><span>Class Adviser</span><input id="adviserName" type="text" placeholder="Enter adviser name" autocomplete="off"></label>
+  <p>Changes apply immediately and are saved for this school in this browser.</p>
+  <button id="btnCloseSignatories" class="btn">Done</button>
+</section>
 <div id="toastContainer" class="toast-container no-print" aria-live="polite"></div>
 
 <main id="cards" class="cards" tabindex="0" aria-label="Report card pages">
