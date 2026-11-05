@@ -4,6 +4,7 @@
   const $ = id => document.getElementById(id);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const fmt = E.fmt;
+  const isTerms = card => card.mode !== 'quarters';
   const fmtFinal = n => n == null ? '' : Number(fmt(n)).toFixed(2);
 
   let model = null, handle = null, visible = [];   // students in the loaded workbook
@@ -190,14 +191,14 @@
   function updateNavigation() {
     const format = selectedFormat();
     const view = $('selCardView');
-    const viewMode = format === 'terms' ? 'terms' : 'quarters';
+    const viewMode = format !== 'quarters' ? 'terms' : 'quarters';
     if (view.dataset.mode !== viewMode) {
       view.innerHTML = viewMode === 'terms'
         ? '<option value="whole">Whole Card</option><option value="t1">Term 1</option><option value="t2">Term 2</option><option value="t3">Term 3</option>'
         : '<option value="whole">Whole Card</option><option value="q1">1st Quarter</option><option value="q2">2nd Quarter</option><option value="q3">3rd Quarter</option><option value="q4">4th Quarter</option>';
       view.dataset.mode = viewMode;
     }
-    $('cardViewField').hidden = format === 'terms-g11';
+    $('cardViewField').hidden = false;
     const incompatible = !!model && selectedFormat() !== model.mode;
     $('btnPrint').disabled = incompatible;
     $('btnPrintAll').disabled = incompatible;
@@ -211,12 +212,8 @@
     updateNavigation();
     window.ECardDropdowns.sync();
     if (!model || !visible.length) return;
-    if (selectedFormat() === 'terms-g11') {
-      $('cards').innerHTML = '<div class="empty no-print"><h2>G11 layout coming soon</h2><p>The 3 Semesters - G11 layout is not available yet.</p></div>';
-      return;
-    }
     if (selectedFormat() !== model.mode) {
-      $('cards').innerHTML = '<div class="empty no-print"><h2>Open a matching workbook</h2><p>The loaded workbook uses ' + (model.mode === 'terms' ? '3 Semesters' : '4 Quarters') + '. Open a workbook for the selected format or switch back to view the current cards.</p></div>';
+      $('cards').innerHTML = '<div class="empty no-print"><h2>Open a matching workbook</h2><p>The loaded workbook uses ' + (model.mode === 'terms-g11' ? '3 Semesters - G11' : model.mode === 'terms' ? '3 Semesters - G7-10' : '4 Quarters - G12') + '. Open a workbook for the selected format or switch back to view the current cards.</p></div>';
       return;
     }
     const st = visible[+$('selStudent').value || 0];
@@ -247,30 +244,30 @@
     return '<table class="front-attendance"><colgroup><col class="attendance-label"><col span="' + (m.length + 1) + '"></colgroup><thead><tr><th></th>' +
       m.map(x => '<th scope="col"><span>' + esc(x.name.toUpperCase()) + '</span></th>').join('') + '<th scope="col"><span>TOTAL</span></th></tr></thead><tbody>' +
       row('No. of Days', 'days', true) + row('No. of Days<br>Present', 'present', true) +
-      (c.mode === 'terms' ? row('No. of Days<br>Absent', 'absent', false) + '<tr class="term-attendance-spacer" aria-hidden="true"><td colspan="' + (m.length + 2) + '"></td></tr>' + row('Tardy', 'tardy', false) : row('Tardy', 'tardy', false) + row('Mass<br>Attendance', 'mass', true)) + '</tbody></table>';
+      (isTerms(c) ? row('No. of Days<br>Absent', 'absent', false) + '<tr class="term-attendance-spacer" aria-hidden="true"><td colspan="' + (m.length + 2) + '"></td></tr>' + row('Tardy', 'tardy', false) : row('Tardy', 'tardy', false) + row('Mass<br>Attendance', 'mass', true)) + '</tbody></table>';
   }
 
   function frontPage(c) {
-    const s = c.student, sc = Object.assign({}, cfg.school, c.mode === 'terms' ? { subtitle: 'Junior High School', title: "LEARNER'S PROGRESS REPORT CARD", adviser: c.adviser || '', principal: c.principal || '' } : {});
+    const s = c.student, sc = Object.assign({}, cfg.school, isTerms(c) ? { subtitle: c.mode === 'terms-g11' ? 'Senior High School' : 'Junior High School', title: "LEARNER'S PROGRESS REPORT CARD", adviser: c.adviser || '', principal: c.principal || '' } : {});
     const blank = '<span class="write-line"></span>';
-    return '<section class="page front' + (c.mode === 'terms' ? ' term-front' : '') + '">' +
+    return '<section class="page front' + (isTerms(c) ? ' term-front' : '') + '">' +
       '<div class="col front-records">' +
         '<h3 class="front-heading attendance-heading">ATTENDANCE RECORD</h3>' + attendanceTable(c) +
         '<h3 class="front-heading parent-heading">PARENT&#39;S / GUARDIAN&#39;S SIGNATURE</h3>' +
-        '<div class="quarter-signatures">' + (c.mode === 'terms' ? ['1st', '2nd', '3rd'] : ['1st', '2nd', '3rd', '4th']).map(q => '<div><span>' + q + (c.mode === 'terms' ? ' Term' : ' Quarter') + '</span>' + blank + '</div>').join('') + '</div>' +
+        '<div class="quarter-signatures">' + (isTerms(c) ? ['1st', '2nd', '3rd'] : ['1st', '2nd', '3rd', '4th']).map(q => '<div><span>' + q + (isTerms(c) ? ' Term' : ' Quarter') + '</span>' + blank + '</div>').join('') + '</div>' +
         '<h3 class="front-heading">CERTIFICATE OF TRANSFER</h3>' +
         '<div class="transfer-row"><span>Admitted to Grade:</span>' + blank + '<span>Section:</span>' + blank + '</div>' +
-        '<div class="transfer-row"><span>' + (c.mode === 'terms' ? 'Eligible for Admission to Grade:' : 'Eligible for Transfer to') + '</span>' + blank + '</div>' +
+        '<div class="transfer-row"><span>' + (isTerms(c) ? 'Eligible for Admission to Grade:' : 'Eligible for Transfer to') + '</span>' + blank + '</div>' +
         '<div class="transfer-approval">Approved by:<div class="approval-signatures"><div>' + blank + '<b>School Principal</b></div><div>' + blank + '<b>Class Adviser</b></div></div></div>' +
         '<h3 class="front-heading cancel-heading">CANCELLATION OF ELIGIBILITY TO TRANSFER</h3>' +
         '<div class="cancellation-fields"><div class="transfer-row"><span>Admitted In:</span>' + blank + '</div><div class="transfer-row"><span>Date:</span>' + blank + '</div></div>' +
         '<div class="cancellation-approval"><span>Approved by:</span><div>' + blank + '<b>School Principal</b></div></div>' +
       '</div>' +
       '<div class="col front-cover">' +
-        '<div class="front-school"><div class="school-emblem"><span>' + (c.mode === 'terms' ? 'SF 9-JHS' : 'SF 9-SHS') + '</span><img src="assets/deped.png" alt="School seal"></div><div class="school-name"><h2>' + esc(sc.name) + '</h2><div>' + esc(sc.address) + '</div>' + (c.mode === 'terms' ? '<div class="school-recognition">Government Recognition No. 40 s., 1971</div>' : '') + '<h3>' + esc(sc.subtitle.toUpperCase()) + '</h3></div><img class="school-seal" src="assets/school.png" alt="School seal"></div>' +
-        '<h1 class="front-card-title">' + esc(sc.title) + (c.mode === 'terms' && s.schoolYear ? '<span class="term-school-year">School Year ' + esc(s.schoolYear) + '</span>' : '') + '</h1>' +
+        '<div class="front-school"><div class="school-emblem"><span>' + (c.mode === 'terms' ? 'SF 9-JHS' : 'SF 9-SHS') + '</span><img src="assets/deped.png" alt="School seal"></div><div class="school-name"><h2>' + esc(sc.name) + '</h2><div>' + esc(sc.address) + '</div>' + (isTerms(c) ? '<div class="school-recognition">Government Recognition No. 40 s., 1971</div>' : '') + '<h3>' + esc(sc.subtitle.toUpperCase()) + '</h3></div><img class="school-seal" src="assets/school.png" alt="School seal"></div>' +
+        '<h1 class="front-card-title">' + esc(sc.title) + (isTerms(c) && s.schoolYear ? '<span class="term-school-year">School Year ' + esc(s.schoolYear) + '</span>' : '') + '</h1>' +
         '<div class="info front-info">' +
-          (c.mode === 'terms'
+          (isTerms(c)
             ? '<div class="row term-name-row">' + field('Name:', s.name) + '</div>' +
               '<div class="row">' + field('Age:', c.age) + field('Sex:', s.sex) + '</div>' +
               '<div class="row">' + field('Grade:', s.grade) + field('Section:', s.section) + '</div>' +
@@ -302,7 +299,7 @@
   }
 
   function valuesTable(c) {
-    const count = c.mode === 'terms' ? 3 : 4;
+    const count = isTerms(c) ? 3 : 4;
     let h = '<table class="back-values"><colgroup><col class="values-name"><col class="values-statement"><col span="' + count + '" class="values-quarter"></colgroup><thead><tr><th rowspan="2">Core Values</th><th rowspan="2">Behavior Statements</th><th colspan="' + count + '">' + (count === 3 ? 'TERM' : 'Quarter') + '</th></tr><tr>' + Array.from({length: count}, (_, i) => '<th>' + (i + 1) + '</th>').join('') + '</tr></thead><tbody>';
     c.values.forEach(v => { h += '<tr><td class="l"><b class="back-text">' + esc(v.code) + ' &ndash; ' + esc(v.name) + '</b></td><td class="l vtext"><span class="back-text">' + esc(v.statement) + '</span></td>' + v.q.map(x => '<td class="c"><span class="back-text">' + esc(x) + '</span></td>').join('') + '</tr>'; });
     return h + '</tbody></table>';
@@ -312,13 +309,18 @@
     const gradeCell = (value, cls) => '<td class="' + cls + '"><span class="back-text">' + esc(value) + '</span></td>';
     const gradeRow = (name, grades, final, remarks, average) => '<tr' + (average ? ' class="term-average"' : '') + '>' +
       gradeCell(name, 'l ' + (/^(music|arts|p\.?e\.?|health)$/i.test(name) ? 'term-component' : 'term-learning-area')) + grades.map(n => gradeCell(average ? fmtFinal(n) : (n == null ? '' : String(n)), 'c')).join('') +
-      gradeCell(average ? fmtFinal(final) : '', 'c') + gradeCell(average ? remarks : '', 'c ' + (remarks === 'FAILED' ? 'fail' : '')) + '</tr>';
-    const rows = c.terms.subjects.map(subject => gradeRow(subject.name, subject.grades, subject.final, subject.remark, false)).join('') +
+      gradeCell(average || c.mode === 'terms-g11' ? fmtFinal(final) : '', 'c') + gradeCell(average || c.mode === 'terms-g11' ? remarks : '', 'c ' + (remarks === 'FAILED' ? 'fail' : '')) + '</tr>';
+    let group = '';
+    const rows = c.terms.subjects.map(subject => {
+      const heading = subject.group && subject.group !== group ? '<tr class="grp"><td colspan="6">' + esc(subject.group) + '</td></tr>' : '';
+      group = subject.group;
+      return heading + gradeRow(subject.name, subject.grades, subject.final, subject.remark, false);
+    }).join('') +
       gradeRow('Average', c.terms.averages.slice(0, 3), c.terms.averages[3], c.terms.remark, true);
     const markings = cfg.markings.map(m => '<tr><td>' + esc(m[0]) + '</td><td>' + esc(m[1]) + '</td></tr>').join('');
     const scale = [['Advancing', '90-100', 'Passed'], ['Benchmarking', '85-89', 'Passed'], ['Connecting', '80-84', 'Passed'], ['Developing', '75-79', 'Passed'], ['Emerging', 'Below 75', 'Failed']]
       .map(r => '<tr><td>' + r.map(esc).join('</td><td>') + '</td></tr>').join('');
-    return '<section class="page back terms">' +
+    return '<section class="page back terms' + (c.mode === 'terms-g11' ? ' g11' : '') + '">' +
       '<div class="col"><h3 class="sec">REPORT ON LEARNING PROGRESS AND ACHIEVEMENT</h3>' +
       '<table class="back-grades term-grades"><colgroup><col class="term-subject"><col span="3" class="term-period"><col class="term-final"><col class="term-remark"></colgroup><thead><tr><th rowspan="2">Learning Areas</th><th colspan="3">TERM</th><th rowspan="2">Final Rating</th><th rowspan="2">Remarks</th></tr><tr><th>1</th><th>2</th><th>3</th></tr></thead><tbody>' + rows + '</tbody></table>' +
       '<div class="back-legends"><table class="scale-guide"><thead><tr><th>Descriptors</th><th>Grade Scale</th><th>Remarks</th></tr></thead><tbody>' + scale + '</tbody></table></div></div>' +
@@ -327,7 +329,7 @@
   }
 
   function backPage(c) {
-    if (c.mode === 'terms') return termBackPage(c);
+    if (isTerms(c)) return termBackPage(c);
     const mk = cfg.markings.map(m => '<tr><td>' + esc(m[0]) + '</td><td>' + esc(m[1]) + '</td></tr>').join('');
     const sc = cfg.scale.map(r => '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1]) + '</td><td>' + esc(r[2]) + '</td></tr>').join('');
     return '<section class="page back">' +
@@ -376,7 +378,8 @@
       total: term === 3 ? card.total : { days: null, present: null, absent: null, tardy: null, mass: null },
       showAttendanceZero: true,
       terms: { ...card.terms,
-        subjects: card.terms.subjects.map(subject => ({ ...subject, grades: maskGrades(subject.grades) })),
+        subjects: card.terms.subjects.map(subject => ({ ...subject, grades: maskGrades(subject.grades),
+          final: term === 3 ? subject.final : null, remark: term === 3 ? subject.remark : '' })),
         averages: [...maskGrades(card.terms.averages.slice(0, 3)), term === 3 ? card.terms.averages[3] : null],
         remark: term === 3 ? card.terms.remark : '' },
       values: card.values.map(value => ({ ...value, q: value.q.map((mark, index) => index === term - 1 ? mark : '') }))
@@ -387,9 +390,9 @@
     const selectedView = $('selCardView').value;
     const quarter = { q1: 1, q2: 2, q3: 3, q4: 4 }[selectedView];
     const term = { t1: 1, t2: 2, t3: 3 }[selectedView];
-    const c = card.mode === 'quarters' && quarter ? quarterCard(card, quarter) : card.mode === 'terms' && term ? termCard(card, term) : card;
+    const c = card.mode === 'quarters' && quarter ? quarterCard(card, quarter) : isTerms(card) && term ? termCard(card, term) : card;
     const viewClass = c.mode === 'quarters' && (quarter >= 2 && quarter <= 4)
-      ? 'page-view ' + selectedView + '-values-only' : c.mode === 'terms' && term >= 2 ? 'page-view term-' + term + '-values-only' : 'page-view';
+      ? 'page-view ' + selectedView + '-values-only' : isTerms(c) && term >= 2 ? 'page-view term-' + term + '-values-only' : 'page-view';
     return '<div class="' + viewClass + '">' + frontPage(c) + '</div><div class="' + viewClass + '">' + backPage(c) + '</div>';
   }
 

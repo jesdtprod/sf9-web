@@ -37,7 +37,7 @@
       const row = rows[r] || [];
       const name = norm(row[2]);
       if (!name) continue;
-      if (mode === 'terms') {
+      if (mode !== 'quarters') {
         out.push({ lrn: norm(row[1]), name, birth: parseDate(row[3]), sex: norm(row[4]),
           schoolYear: norm(row[5]), curriculum: norm(row[6]), grade: norm(row[7]), section: norm(row[8]), strand: '' });
         continue;
@@ -76,14 +76,27 @@
     return Object.assign({ subjects }, indexRows(rows, 2, 3, 2));
   }
 
+  function readTermValues(wb, cfg) {
+    const card = wb.Sheets['CARD BACK'], values = [];
+    if (card) for (let r = 1; r <= 69; r++) {
+      const title = norm(card['H' + r] && card['H' + r].v);
+      const match = title.match(/^([A-Z])\s*[-?]\s*(.+)$/i);
+      const statement = norm(card['I' + r] && card['I' + r].v);
+      if (match && statement) values.push({ code: match[1].toUpperCase(), name: match[2], statement });
+    }
+    return values.length === 9 ? values : cfg.values;
+  }
+
   function parse(XLSX, wb, cfg) {
     const S = cfg.sheets;
-    const mode = ['TERM 1', 'TERM 2', 'TERM 3', 'FINAL'].every(name => !!wb.Sheets[name]) ? 'terms' : 'quarters';
+    const g11Sheets = ['Core_Subjects', 'Elective_Subjects', 'Other_Subjects'];
+    const mode = g11Sheets.every(name => !!wb.Sheets[name]) ? 'terms-g11' :
+      ['TERM 1', 'TERM 2', 'TERM 3', 'FINAL'].every(name => !!wb.Sheets[name]) ? 'terms' : 'quarters';
     const students = readStudents(sheetRows(XLSX, wb, S.students), mode);
     const vRows = sheetRows(XLSX, wb, S.values);
     const aRows = sheetRows(XLSX, wb, S.attendance);
     const months = [];
-    const periodCount = mode === 'terms' ? 3 : 4;
+    const periodCount = mode === 'quarters' ? 4 : 3;
     for (let c = 3; c < (aRows[0] || []).length; c += periodCount) {
       const m = norm(aRows[0][c]);
       if (!m || m.toUpperCase() === 'TOTAL') break;
@@ -91,28 +104,40 @@
     }
     const shared = { mode, students, values: indexRows(vRows, 3, 2, 1),
       attendance: Object.assign({ months }, indexRows(aRows, 3, 2, 1)) };
+    if (mode === 'terms-g11') {
+      const gradeSheets = g11Sheets.map((name, i) => {
+        const rows = sheetRows(XLSX, wb, name), headers = rows[0] || [];
+        const subjects = [];
+        for (let col = 4; col < headers.length; col++) {
+          const name = norm(headers[col]);
+          if (!name) continue;
+          // Electives occupy one term only; the other sheets use three columns per subject.
+          const term = i === 1 ? Math.floor((col - 4) / 3) : null;
+          subjects.push({ name, cols: term == null ? [col, col + 1, col + 2] :
+            [0, 1, 2].map(k => k === term ? col : null) });
+        }
+        if (i === 0) {
+          const combined = subjects.findIndex(s => /Effective Communication\s*\//i.test(s.name));
+          if (combined > 0) subjects.unshift(subjects.splice(combined, 1)[0]);
+        }
+        return Object.assign({ title: ['Core Subjects', 'Elective Subjects', 'Other Subjects'][i], subjects }, indexRows(rows, 2, 3, 2));
+      });
+      const front = wb.Sheets['CARD FRONT'];
+      return Object.assign(shared, { gradeSheets, termValues: readTermValues(wb, cfg),
+        adviser: norm(front && front.Q29 && front.Q29.v), principal: norm(front && front.N34 && front.N34.v) });
+    }
     if (mode === 'terms') {
       const termSheets = ['TERM 1', 'TERM 2', 'TERM 3', 'FINAL'].map(name => {
         const rows = sheetRows(XLSX, wb, name);
         return Object.assign({ headers: rows[0] || [] }, indexRows(rows, 2, 3, 2));
       });
-      const card = wb.Sheets['CARD BACK'];
       const headers = termSheets[0].headers;
       const averageCol = headers.findIndex((header, i) => i >= 4 && /^(general\s+)?average$/i.test(norm(header)));
       const subjects = headers.slice(4, averageCol < 0 ? headers.length : averageCol).map((name, i) => ({
         name: norm(name), col: 4 + i
       })).filter(subject => subject.name && !/^rank$/i.test(subject.name));
-      const termValues = [];
-      if (card) {
-        for (let r = 1; r <= 69; r++) {
-          const title = norm(card['H' + r] && card['H' + r].v);
-          const match = title.match(/^([A-Z])\s*[-?]\s*(.+)$/i);
-          const statement = norm(card['I' + r] && card['I' + r].v);
-          if (match && statement) termValues.push({ code: match[1].toUpperCase(), name: match[2], statement });
-        }
-      }
       const front = wb.Sheets['CARD FRONT'];
-      return Object.assign(shared, { termSheets, subjects, averageCol, termValues: termValues.length === 9 ? termValues : cfg.values, adviser: norm(front && front.Q29 && front.Q29.v),
+      return Object.assign(shared, { termSheets, subjects, averageCol, termValues: readTermValues(wb, cfg), adviser: norm(front && front.Q29 && front.Q29.v),
         principal: norm(front && front.N34 && front.N34.v) });
     }
     return Object.assign(shared, {
@@ -155,19 +180,34 @@
   function remark(n, cfg) { return n == null ? '' : (n > cfg.passMark - 0.1 ? 'PASSED' : 'FAILED'); }
 
   function buildCard(model, st, cfg) {
+    const threeTerms = model.mode !== 'quarters';
     const vrow = find(model.values, st);
-    const values = (model.mode === 'terms' ? model.termValues : cfg.values).map((v, i) => ({
-      ...v, q: Array.from({ length: model.mode === 'terms' ? 3 : 4 }, (_, k) => vrow ? norm(vrow[3 + i * (model.mode === 'terms' ? 3 : 4) + k]) : '')
+    const values = (threeTerms ? model.termValues : cfg.values).map((v, i) => ({
+      ...v, q: Array.from({ length: threeTerms ? 3 : 4 }, (_, k) => vrow ? norm(vrow[3 + i * (threeTerms ? 3 : 4) + k]) : '')
     }));
     const arow = find(model.attendance, st);
     const months = model.attendance.months.map(m => {
       const g = k => (arow ? num(arow[m.col + k]) : null);
       const days = g(0), present = g(1);
       return { name: m.name, days, present, absent: days == null || present == null ? null : days - present,
-        tardy: g(2), mass: model.mode === 'terms' ? null : g(3) };
+        tardy: g(2), mass: threeTerms ? null : g(3) };
     });
     const sum = k => { const v = months.map(m => m[k]).filter(x => x != null); return v.length ? v.reduce((a, b) => a + b, 0) : null; };
-    const terms = model.mode === 'terms' ? (() => {
+    const terms = model.mode === 'terms-g11' ? (() => {
+      const subjects = model.gradeSheets.flatMap(sheet => {
+        const row = find(sheet, st);
+        return sheet.subjects.map(subject => {
+          const grades = subject.cols.map(col => { const n = row && col != null ? num(row[col]) : null; return n === 0 ? null : n; });
+          const filled = grades.filter(n => n != null);
+          const final = filled.length ? filled.reduce((a, b) => a + b, 0) / filled.length : null;
+          return { name: subject.name, group: sheet.title, grades, final,
+            remark: final == null ? '' : final > 74.4 ? 'PASSED' : 'FAILED' };
+        });
+      });
+      const average = subjects.find(s => /^average$/i.test(s.name));
+      return { subjects: subjects.filter(s => s !== average),
+        averages: average ? [...average.grades, average.final] : [null, null, null, null], remark: average ? average.remark : '' };
+    })() : model.mode === 'terms' ? (() => {
       const rows = model.termSheets.map(sheet => find(sheet, st));
       const finalHeaders = model.termSheets[3].headers;
       const finalAverageCol = finalHeaders.findIndex(header => /^(general\s+)?average$/i.test(norm(header)));

@@ -284,6 +284,9 @@ tr.grp td { background:var(--soft); font-weight:700; }
 .terms .back-legends table { font-size:9pt; }
 .terms .term-values-legend-title { font-size:10pt; font-weight:700; }
 .terms .markings-guide th, .terms .markings-guide td { text-align:center; }
+.g11 .term-grades { height:82%; }
+.g11 .term-grades td { font-size:7.5pt; }
+.g11 .term-average { height:24px; }
 
 /* Terms 2 and 3 print only new values over the previously printed card. */
 .term-2-values-only .page *, .term-3-values-only .page *,
@@ -300,12 +303,16 @@ tr.grp td { background:var(--soft); font-weight:700; }
 .term-3-values-only .term-grades tbody td:nth-child(4),
 .term-3-values-only .term-average td:nth-child(5),
 .term-3-values-only .term-average td:nth-child(6),
+.term-3-values-only .g11 .term-grades tbody tr:not(.grp) td:nth-child(5),
+.term-3-values-only .g11 .term-grades tbody tr:not(.grp) td:nth-child(6),
 .term-2-values-only .back-values tbody td:nth-child(4),
 .term-3-values-only .back-values tbody td:nth-child(5) { visibility:visible; color:#000; border-color:transparent; background:transparent; }
 .term-2-values-only .term-grades tbody td:nth-child(3) *,
 .term-3-values-only .term-grades tbody td:nth-child(4) *,
 .term-3-values-only .term-average td:nth-child(5) *,
 .term-3-values-only .term-average td:nth-child(6) *,
+.term-3-values-only .g11 .term-grades tbody tr:not(.grp) td:nth-child(5) *,
+.term-3-values-only .g11 .term-grades tbody tr:not(.grp) td:nth-child(6) *,
 .term-2-values-only .back-values tbody td:nth-child(4) *,
 .term-3-values-only .back-values tbody td:nth-child(5) * { visibility:visible; }
 
