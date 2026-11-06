@@ -577,6 +577,7 @@
     if (!savedWorkspace) saveWorkspace();
     restore();
   }
+  let redrawLanding = () => {};
   $('chooseNdp').onclick = () => chooseSchool('ndp');
   $('chooseNds').onclick = () => chooseSchool('nds');
   $('btnChangeSchool').onclick = () => {
@@ -588,6 +589,7 @@
     $('schoolLanding').hidden = false;
     $('schoolFavicon').href = 'assets/deped.png';
     document.title = 'E-Card DepEd SF9';
+    redrawLanding();
     $('chooseNdp').focus();
   };
 
@@ -645,6 +647,156 @@
   }, { passive: false });
   new ResizeObserver(fitPreview).observe(preview);
   fitPreview();
+
+  (function initLandingConvexPattern() {
+    const landing = $('schoolLanding'), canvas = $('landingPattern');
+    if (!landing || !canvas || typeof canvas.getContext !== 'function') return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    let w = 0, h = 0, dpr = 1, raf = 0;
+    let tx = -9999, ty = -9999, cx = -9999, cy = -9999, targetStrength = 0, strength = 0;
+    const spacing = 34, radius = 210, maxPush = 24;
+
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = window.innerWidth || landing.clientWidth || 1200;
+      h = window.innerHeight || landing.clientHeight || 800;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      draw();
+    }
+
+    function project(gx, gy) {
+      if (strength <= 0.002) return { x: gx, y: gy, lift: 0 };
+      const dx = gx - cx, dy = gy - cy;
+      const dist = Math.hypot(dx, dy);
+      if (dist >= radius || dist < 0.001) return { x: gx, y: gy, lift: dist < 0.001 ? strength : 0 };
+      const t = dist / radius;
+      const dome = Math.pow(1 - t * t, 2);
+      const push = Math.sin(t * Math.PI) * (1 - t * 0.45) * maxPush * strength;
+      return {
+        x: gx + (dx / dist) * push,
+        y: gy + (dy / dist) * push,
+        lift: dome * strength
+      };
+    }
+
+    function draw() {
+      if (landing.hidden || !w || !h) return;
+      ctx.clearRect(0, 0, w, h);
+      const cols = Math.ceil(w / spacing) + 2;
+      const rows = Math.ceil(h / spacing) + 2;
+      const ox = ((w - (cols - 1) * spacing) * 0.5);
+      const oy = ((h - (rows - 1) * spacing) * 0.5);
+
+      const pts = new Array(rows);
+      for (let r = 0; r < rows; r++) {
+        const row = new Array(cols);
+        const gy = oy + r * spacing;
+        for (let c = 0; c < cols; c++) {
+          row[c] = project(ox + c * spacing, gy);
+        }
+        pts[r] = row;
+      }
+
+      if (strength > 0.01) {
+        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius * 1.1);
+        grad.addColorStop(0, 'rgba(31, 95, 58, ' + (0.09 * strength).toFixed(3) + ')');
+        grad.addColorStop(0.55, 'rgba(46, 138, 84, ' + (0.04 * strength).toFixed(3) + ')');
+        grad.addColorStop(1, 'rgba(31, 95, 58, 0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+      }
+
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(31, 95, 58, 0.065)';
+      ctx.beginPath();
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const p = pts[r][c];
+          if (c + 1 < cols) {
+            const pr = pts[r][c + 1];
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(pr.x, pr.y);
+          }
+          if (r + 1 < rows) {
+            const pb = pts[r + 1][c];
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(pb.x, pb.y);
+          }
+        }
+      }
+      ctx.stroke();
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const p = pts[r][c];
+          const dotR = 1.35 + p.lift * 2.1;
+          const alpha = 0.18 + p.lift * 0.48;
+          ctx.fillStyle = 'rgba(31, 95, 58, ' + alpha.toFixed(3) + ')';
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, dotR, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    function tick() {
+      raf = 0;
+      if (landing.hidden) return;
+      cx += (tx - cx) * 0.18;
+      cy += (ty - cy) * 0.18;
+      strength += (targetStrength - strength) * 0.14;
+      draw();
+      if (Math.hypot(tx - cx, ty - cy) > 0.35 || Math.abs(targetStrength - strength) > 0.004) {
+        raf = requestAnimationFrame(tick);
+      }
+    }
+
+    function schedule() {
+      if (!raf && !landing.hidden) raf = requestAnimationFrame(tick);
+    }
+
+    landing.addEventListener('pointermove', e => {
+      if (cx < -1000) { cx = e.clientX; cy = e.clientY; }
+      tx = e.clientX;
+      ty = e.clientY;
+      targetStrength = 1;
+      landing.style.setProperty('--mouse-x', ((e.clientX / Math.max(1, w)) * 100).toFixed(1) + '%');
+      landing.style.setProperty('--mouse-y', ((e.clientY / Math.max(1, h)) * 100).toFixed(1) + '%');
+      schedule();
+    });
+    landing.addEventListener('pointerleave', () => {
+      targetStrength = 0;
+      schedule();
+    });
+
+    const cards = landing.querySelectorAll('.school-choice');
+    cards.forEach(card => {
+      card.addEventListener('pointermove', e => {
+        const rect = card.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+        const px = (e.clientX - rect.left) / rect.width;
+        const py = (e.clientY - rect.top) / rect.height;
+        const rx = ((0.5 - py) * 7).toFixed(2) + 'deg';
+        const ry = ((px - 0.5) * 7).toFixed(2) + 'deg';
+        card.style.setProperty('--rx', rx);
+        card.style.setProperty('--ry', ry);
+        card.style.setProperty('--card-x', (px * 100).toFixed(1) + '%');
+        card.style.setProperty('--card-y', (py * 100).toFixed(1) + '%');
+      });
+      card.addEventListener('pointerleave', () => {
+        card.style.setProperty('--rx', '0deg');
+        card.style.setProperty('--ry', '0deg');
+      });
+    });
+
+    redrawLanding = resize;
+    window.addEventListener('resize', resize);
+    resize();
+  })();
+
   window.addEventListener('beforeunload', saveWorkspace);
   try {
     const savedWorkspace = JSON.parse(localStorage.getItem('ecard:last-workspace'));
