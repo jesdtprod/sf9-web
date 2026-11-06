@@ -740,6 +740,43 @@
           ctx.fill();
         }
       }
+
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = 'rgba(31, 95, 58, 0.14)';
+      ctx.beginPath();
+      for (let r = 0; r + 1 < rows; r++) {
+        const cyCell = oy + (r + 0.5) * spacing;
+        for (let c = 0; c + 1 < cols; c++) {
+          const pc = project(ox + (c + 0.5) * spacing, cyCell);
+          if (pc.lift > 0.01) continue;
+          const arm = 2.5;
+          ctx.moveTo(pc.x - arm, pc.y);
+          ctx.lineTo(pc.x + arm, pc.y);
+          ctx.moveTo(pc.x, pc.y - arm);
+          ctx.lineTo(pc.x, pc.y + arm);
+        }
+      }
+      ctx.stroke();
+
+      if (strength > 0.01) {
+        for (let r = 0; r + 1 < rows; r++) {
+          const cyCell = oy + (r + 0.5) * spacing;
+          for (let c = 0; c + 1 < cols; c++) {
+            const pc = project(ox + (c + 0.5) * spacing, cyCell);
+            if (pc.lift <= 0.01) continue;
+            const arm = 2.5 + pc.lift * 2.4;
+            const alpha = 0.14 + pc.lift * 0.42;
+            ctx.lineWidth = 1 + pc.lift * 0.5;
+            ctx.strokeStyle = 'rgba(31, 95, 58, ' + alpha.toFixed(3) + ')';
+            ctx.beginPath();
+            ctx.moveTo(pc.x - arm, pc.y);
+            ctx.lineTo(pc.x + arm, pc.y);
+            ctx.moveTo(pc.x, pc.y - arm);
+            ctx.lineTo(pc.x, pc.y + arm);
+            ctx.stroke();
+          }
+        }
+      }
     }
 
     function tick() {
@@ -789,6 +826,9 @@
       card.addEventListener('pointerleave', () => {
         card.style.setProperty('--rx', '0deg');
         card.style.setProperty('--ry', '0deg');
+      });
+      card.addEventListener('click', e => {
+        if (!e.target.closest('button') && card.dataset.school) chooseSchool(card.dataset.school);
       });
     });
 
