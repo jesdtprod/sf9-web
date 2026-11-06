@@ -386,6 +386,12 @@ tr.grp td { background:var(--soft); font-weight:700; }
 .back-grades { flex:none; height:calc(50% - 24px); }
 .back-values { height:62%; flex-shrink:0; }
 .back-grades th, .back-grades td, .back-values th, .back-values td { border:.5pt solid #111; padding:1px 3px; }
+.back-grades th, .back-grades td,
+.back-values th, .back-values td,
+.front-attendance th, .front-attendance td {
+  text-align:center;
+  vertical-align:middle;
+}
 .back-grades thead tr, .back-values thead tr { height:18px; }
 .back-grades thead th, .back-values thead th { background:#fff; font-size:7.5pt; line-height:1.08; }
 .back-grades .grade-subject { width:47%; }
