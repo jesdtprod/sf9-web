@@ -9,7 +9,59 @@
 
   let model = null, handle = null, visible = [];   // students in the loaded workbook
   let schoolId = null;
+  let pendingWorkspace = null;
+  function saveWorkspace() {
+    if (!schoolId || $('schoolWorkspace').hidden) return;
+    try {
+      localStorage.setItem('ecard:last-workspace', JSON.stringify({
+        school: schoolId, format: $('selFormat').value, view: $('selCardView').value,
+        student: $('selStudent').value, settings: !$('signatureSettings').hidden,
+        zoom: userZoom
+      }));
+    } catch (e) { /* The workspace still works when storage is unavailable. */ }
+  }
   let signatories = null;
+  const attendanceMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const defaultQuarterRanges = () => [[5, 7], [8, 9], [10, 0], [1, 2]];
+  let quarterRanges = defaultQuarterRanges();
+  const defaultSemesterRanges = () => [[5, 7], [8, 11], [0, 2]];
+  let semesterRanges = defaultSemesterRanges();
+
+  function inAttendanceRange(month, range) {
+    const index = attendanceMonths.findIndex(name => name.slice(0, 3).toUpperCase() === String(month.name).trim().toUpperCase().slice(0, 3));
+    const [from, to] = range;
+    return index >= 0 && (from <= to ? index >= from && index <= to : index >= from || index <= to);
+  }
+
+  function fillAttendanceSettings() {
+    const fields = (ranges, period) => ranges.map((range, i) => {
+      const code = (period === 'Quarter' ? 'Q' : 'S') + (i + 1);
+      const makeField = (selected, edge) =>
+        '<div class="attendance-month-field">' +
+        '<select id="attendance-' + period + '-' + i + '-' + edge + '" data-period="' + period + '" data-index="' + i + '" data-edge="' + edge + '" aria-label="' + period + ' ' + (i + 1) + ' month ' + (edge ? 'to' : 'from') + '">' +
+        attendanceMonths.map((name, month) => '<option value="' + month + '"' + (month === selected ? ' selected' : '') + '>' + name + '</option>').join('') +
+        '</select></div>';
+      return '<div class="attendance-range">' +
+        '<div class="attendance-period"><span class="attendance-period-tag">' + code + '</span><strong>' + ['1st', '2nd', '3rd', '4th'][i] + ' ' + period + '</strong></div>' +
+        makeField(range[0], 0) +
+        '<span class="attendance-range-arrow" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></span>' +
+        makeField(range[1], 1) +
+        '</div>';
+    }).join('');
+    $('quarterAttendanceRanges').innerHTML = fields(quarterRanges, 'Quarter');
+    $('semesterAttendanceRanges').innerHTML = fields(semesterRanges, 'Semester');
+    if (window.ECardDropdowns && window.ECardDropdowns.enhanceAttendance) window.ECardDropdowns.enhanceAttendance();
+  }
+  $('attendanceGroups').addEventListener('change', e => {
+    const select = e.target;
+    if (!select.matches('select[data-period]')) return;
+    const ranges = select.dataset.period === 'Quarter' ? quarterRanges : semesterRanges;
+    ranges[Number(select.dataset.index)][Number(select.dataset.edge)] = Number(select.value);
+    const key = select.dataset.period === 'Quarter' ? 'quarters' : 'semesters';
+    try { localStorage.setItem('ecard:attendance-' + key + ':' + schoolId, JSON.stringify(ranges)); }
+    catch (e) { status('Attendance updated for this visit, but browser storage is unavailable.', true); }
+    renderOne();
+  });
   let loadGeneration = 0, saveQueue = Promise.resolve();
 
   /* ---------- status & centralized toast ---------- */
@@ -75,6 +127,9 @@
       const wb = XLSX.read(buf, { type: 'array', cellDates: true });
       const nextModel = E.parse(XLSX, wb, cfg);
       if (generation !== loadGeneration) return false;
+      if (model && !pendingWorkspace) pendingWorkspace = {
+        format: $('selFormat').value, view: $('selCardView').value, student: $('selStudent').value
+      };
       model = nextModel;
       if (!signatories) {
         signatories = { principal: model.principal || '', adviser: model.adviser || '' };
@@ -207,7 +262,20 @@
   function fillStudents() {
     visible = model.students;
     $('selStudent').innerHTML = visible.map((student, i) => '<option value="' + i + '">' + esc(student.name) + '</option>').join('');
+    if (pendingWorkspace) {
+      applyWorkspaceSelection(pendingWorkspace);
+      pendingWorkspace = null;
+    }
     renderOne();
+  }
+  function applyWorkspaceSelection(saved) {
+    if (['quarters', 'terms', 'terms-g11'].includes(saved.format)) $('selFormat').value = saved.format;
+    updateNavigation();
+    if (['whole', 'q1', 'q2', 'q3', 'q4', 't1', 't2', 't3'].includes(saved.view) &&
+      (saved.view === 'whole' || saved.view.startsWith(selectedFormat() === 'quarters' ? 'q' : 't'))) $('selCardView').value = saved.view;
+    const index = Number(saved.student);
+    if (Number.isInteger(index) && index >= 0 && index < visible.length) $('selStudent').value = String(index);
+    window.ECardDropdowns.sync();
   }
   $('selStudent').onchange = renderOne;
   $('selCardView').onchange = renderOne;
@@ -242,6 +310,7 @@
   function renderOne() {
     updateNavigation();
     window.ECardDropdowns.sync();
+    if (!pendingWorkspace) saveWorkspace();
     if (!model || !visible.length) return;
     if (selectedFormat() !== model.mode) {
       showWorkbookPrompt(true);
@@ -270,7 +339,7 @@
     const m = c.months;
     const zero = v => (v == null || (v === 0 && !c.showAttendanceZero) ? '' : v);
     const row = (label, k, blank0) => '<tr><th scope="row">' + label + '</th>' +
-      m.map(x => cell(blank0 ? zero(x[k]) : (x[k] == null ? '' : x[k]))).join('') +
+      m.map(x => '<td' + (x.attendanceSelected ? ' class="attendance-selected"' : '') + '>' + esc(blank0 ? zero(x[k]) : (x[k] == null ? '' : x[k])) + '</td>').join('') +
       cell(blank0 ? zero(c.total[k]) : (c.total[k] == null ? '' : c.total[k])) + '</tr>';
     return '<table class="front-attendance"><colgroup><col class="attendance-label"><col span="' + (m.length + 1) + '"></colgroup><thead><tr><th></th>' +
       m.map(x => '<th scope="col"><span>' + esc(x.name.toUpperCase()) + '</span></th>').join('') + '<th scope="col"><span>TOTAL</span></th></tr></thead><tbody>' +
@@ -372,9 +441,8 @@
   }
 
   function quarterCard(card, quarter) {
-    const allowedMonths = { 1: ['JUN', 'JUL', 'AUG'], 2: ['SEP', 'OCT'], 3: ['NOV', 'DEC', 'JAN'], 4: ['FEB', 'MAR'] }[quarter];
-    const visibleMonth = month => allowedMonths.includes(String(month.name).trim().toUpperCase().slice(0, 3));
-    const months = card.months.map(month => visibleMonth(month) ? month : {
+    const visibleMonth = month => inAttendanceRange(month, quarterRanges[quarter - 1]);
+    const months = card.months.map(month => visibleMonth(month) ? { ...month, attendanceSelected: true } : {
       ...month, days: null, present: null, absent: null, tardy: null, mass: null
     });
     const maskSemester = (semester, showSelectedQuarter) => ({
@@ -400,11 +468,10 @@
   }
 
   function termCard(card, term) {
-    const allowed = { 1: ['JUN', 'JUL', 'AUG'], 2: ['SEP', 'OCT', 'NOV', 'DEC'], 3: ['JAN', 'FEB', 'MAR'] }[term];
     const maskGrades = grades => grades.map((grade, i) => i === term - 1 ? grade : null);
     return {
       ...card,
-      months: card.months.map(month => allowed.includes(String(month.name).trim().toUpperCase().slice(0, 3)) ? month :
+      months: card.months.map(month => inAttendanceRange(month, semesterRanges[term - 1]) ? { ...month, attendanceSelected: true } :
         { ...month, days: null, present: null, absent: null, tardy: null, mass: null }),
       total: term === 3 ? card.total : { days: null, present: null, absent: null, tardy: null, mass: null },
       showAttendanceZero: true,
@@ -437,6 +504,7 @@
     $('btnSignatories').setAttribute('aria-expanded', String(show));
     if (show) $('principalName').focus();
     else $('btnSignatories').focus();
+    saveWorkspace();
   }
   $('btnSignatories').onclick = () => showSignatories($('signatureSettings').hidden);
   if ($('btnDismissSignatories')) $('btnDismissSignatories').onclick = () => showSignatories(false);
@@ -457,13 +525,27 @@
     setTimeout(() => {
       setBtnLoading(btn, false);
       showSignatories(false);
-      toast('Signatories saved for ' + (cfg.school.name || 'this school') + '.');
+      toast('Settings saved for ' + (cfg.school.name || 'this school') + '.');
     }, 220);
   };
 
-  function chooseSchool(id) {
+  function chooseSchool(id, savedWorkspace = null) {
     ++loadGeneration;
     schoolId = id;
+    pendingWorkspace = savedWorkspace;
+    quarterRanges = defaultQuarterRanges();
+    semesterRanges = defaultSemesterRanges();
+    try {
+      const saved = JSON.parse(localStorage.getItem('ecard:attendance-semesters:' + id));
+      if (Array.isArray(saved) && saved.length === 3 && saved.every(range =>
+        Array.isArray(range) && range.length === 2 && range.every(month => Number.isInteger(month) && month >= 0 && month < 12))) semesterRanges = saved;
+    } catch (e) { /* Use default semester ranges if storage is unavailable. */ }
+    try {
+      const savedRanges = JSON.parse(localStorage.getItem('ecard:attendance-quarters:' + id));
+      if (Array.isArray(savedRanges) && savedRanges.length === 4 && savedRanges.every(range =>
+        Array.isArray(range) && range.length === 2 && range.every(month => Number.isInteger(month) && month >= 0 && month < 12))) quarterRanges = savedRanges;
+    } catch (e) { /* Use default attendance ranges if storage is unavailable. */ }
+    fillAttendanceSettings();
     signatories = null;
     try {
       const saved = JSON.parse(localStorage.getItem('ecard:signatories:' + id));
@@ -486,12 +568,20 @@
     $('schoolLanding').hidden = true;
     $('schoolWorkspace').hidden = false;
     updateNavigation();
+    if (savedWorkspace) {
+      applyWorkspaceSelection(savedWorkspace);
+      if (savedWorkspace.zoom === null || (typeof savedWorkspace.zoom === 'number' && savedWorkspace.zoom >= 0.25 && savedWorkspace.zoom <= 3)) userZoom = savedWorkspace.zoom;
+      if (savedWorkspace.settings === true) showSignatories(true);
+    }
     fitPreview();
+    if (!savedWorkspace) saveWorkspace();
     restore();
   }
   $('chooseNdp').onclick = () => chooseSchool('ndp');
   $('chooseNds').onclick = () => chooseSchool('nds');
   $('btnChangeSchool').onclick = () => {
+    pendingWorkspace = null;
+    try { localStorage.removeItem('ecard:last-workspace'); } catch (e) { /* Storage may be unavailable. */ }
     ++loadGeneration;
     model = null; handle = null; visible = [];
     $('schoolWorkspace').hidden = true;
@@ -555,4 +645,10 @@
   }, { passive: false });
   new ResizeObserver(fitPreview).observe(preview);
   fitPreview();
+  window.addEventListener('beforeunload', saveWorkspace);
+  try {
+    const savedWorkspace = JSON.parse(localStorage.getItem('ecard:last-workspace'));
+    if (savedWorkspace && ['ndp', 'nds'].includes(savedWorkspace.school)) chooseSchool(savedWorkspace.school, savedWorkspace);
+  } catch (e) { /* Start at school selection if the saved workspace is unavailable. */ }
+  document.documentElement.classList.remove('restoring-workspace');
 })();

@@ -118,7 +118,7 @@ console.log('G11 mapping, blank grades, electives, averages, attendance, values,
     addEventListener() {}, print() { printed++; } };
   const names = new Map();
   const localStorage = { getItem: key => names.get(key) || null, setItem: (key, value) => names.set(key, value) };
-  const sandbox = { window: browser, localStorage, document: { getElementById: get, addEventListener() {}, createElement() { return {}; } },
+  const sandbox = { window: browser, localStorage, document: { documentElement: { classList: { remove() {} } }, getElementById: get, addEventListener() {}, createElement() { return {}; } },
     indexedDB, XLSX: X, requestAnimationFrame() {}, setTimeout(fn) { fn(); }, ResizeObserver: class { observe() {} } };
   vm.runInNewContext(fs.readFileSync(require.resolve('../js/app.js'), 'utf8'), sandbox);
   get('chooseNdp').onclick();

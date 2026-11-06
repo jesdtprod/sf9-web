@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>E-Card DepEd SF9</title>
+<script>
+try {
+  const saved = JSON.parse(localStorage.getItem('ecard:last-workspace'));
+  if (saved && ['ndp', 'nds'].includes(saved.school)) document.documentElement.classList.add('restoring-workspace');
+} catch (e) { /* Show school selection when storage is unavailable. */ }
+</script>
+<style>.restoring-workspace #schoolLanding { display:none !important; }</style>
 <link id="schoolFavicon" rel="icon" type="image/png" href="assets/deped.png">
 <link rel="stylesheet" href="css/style.css">
 </head>
@@ -85,7 +92,7 @@
       </button>
       <button id="btnSignatories" class="btn" aria-expanded="false" aria-controls="signatureSettings">
         <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-        <span class="btn-label">Principal &amp; Adviser</span>
+        <span class="btn-label">Settings</span>
       </button>
       <span class="offline-badge"><span aria-hidden="true"></span>Offline workspace</span>
       <button id="btnOpen" class="btn">
@@ -103,7 +110,7 @@
       <span class="field-label">Format</span>
       <select id="selFormat" aria-label="Report card format">
         <option value="quarters">4 Quarters - G12</option>
-        <option value="terms-g11">3 Semesters - G11</option>
+        <option value="terms-g11">3 Semesters - G11-G12</option>
         <option value="terms">3 Semesters - G7-10</option>
       </select>
     </div>
@@ -150,8 +157,8 @@
           <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
         </span>
         <div>
-          <h2 id="signatureModalTitle">Report Card Signatories</h2>
-          <p>Configure official names printed on every learner report card.</p>
+          <h2 id="signatureModalTitle">Settings</h2>
+          <p>Configure report card signatories and attendance periods.</p>
         </div>
       </div>
       <button id="btnDismissSignatories" class="btn icon-btn modal-close-btn" type="button" title="Close" aria-label="Close">
@@ -174,6 +181,50 @@
         </div>
       </label>
     </div>
+    <section class="attendance-settings" aria-labelledby="attendanceSettingsTitle">
+      <div class="attendance-settings-header">
+        <div class="attendance-title-group">
+          <span class="attendance-title-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          </span>
+          <div>
+            <h3 id="attendanceSettingsTitle">Attendance Setup</h3>
+            <p class="attendance-subtitle">Set the inclusive month coverage for each quarter or semester.</p>
+          </div>
+        </div>
+      </div>
+      <div id="attendanceGroups" class="attendance-groups">
+        <fieldset class="attendance-group">
+          <legend class="sr-only">4 Quarters - G12</legend>
+          <div class="attendance-group-header" aria-hidden="true">
+            <span class="attendance-group-title">4 Quarters</span>
+            <span class="attendance-group-badge">G12</span>
+          </div>
+          <div class="attendance-cols-head" aria-hidden="true">
+            <span>Period</span>
+            <span>Month From</span>
+            <span></span>
+            <span>Month To</span>
+          </div>
+          <div id="quarterAttendanceRanges" class="attendance-ranges-list"></div>
+        </fieldset>
+        <fieldset class="attendance-group">
+          <legend class="sr-only">3 Semesters - G7-12</legend>
+          <div class="attendance-group-header" aria-hidden="true">
+            <span class="attendance-group-title">3 Semesters</span>
+            <span class="attendance-group-badge">G7–12</span>
+          </div>
+          <div class="attendance-cols-head" aria-hidden="true">
+            <span>Period</span>
+            <span>Month From</span>
+            <span></span>
+            <span>Month To</span>
+          </div>
+          <div id="semesterAttendanceRanges" class="attendance-ranges-list"></div>
+        </fieldset>
+      </div>
+      <p class="attendance-help">Semester settings apply to both 3-semester formats. Ranges can cross January, and changes apply immediately to previews and printing.</p>
+    </section>
     <div class="signature-modal-footer">
       <p class="signature-note">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
@@ -209,7 +260,7 @@
     </div>
     <span class="divider" aria-hidden="true"></span>
     <div class="zoom-presets" role="group" aria-label="Zoom presets">
-      <button id="zoomFit" class="btn zoom-preset active" title="Fit front and back to window">Fit both</button>
+      <button id="zoomFit" class="btn zoom-preset active" title="Fit front and back to window">Fit Both</button>
       <button id="zoom100" class="btn zoom-preset" title="Actual size (100%)">100%</button>
     </div>
   </div>

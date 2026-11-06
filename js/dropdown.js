@@ -147,7 +147,8 @@
       } else if (event.key === 'Tab') close(false);
     });
     select.addEventListener('change', () => refresh(control));
-    new MutationObserver(() => refresh(control)).observe(select, { childList: true, subtree: true, attributes: true });
+    control.observer = new MutationObserver(() => refresh(control));
+    control.observer.observe(select, { childList: true, subtree: true, attributes: true });
     controls.push(control);
     refresh(control);
   }
@@ -156,12 +157,26 @@
   makeDropdown('selCardView');
   makeDropdown('selStudent');
   document.addEventListener('pointerdown', event => { if (active && !active.panel.contains(event.target) && !active.field.contains(event.target)) close(false); });
-  document.addEventListener('keydown', event => { if (active && event.key === 'Escape') { event.preventDefault(); close(true); } });
+  document.addEventListener('keydown', event => { if (active && event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); close(true); } }, true);
   window.addEventListener('resize', () => { if (active) position(active); });
   window.addEventListener('scroll', () => { if (active) position(active); }, true);
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', () => { if (active) position(active); });
     window.visualViewport.addEventListener('scroll', () => { if (active) position(active); });
   }
-  window.ECardDropdowns = { sync() { controls.forEach(refresh); if (active && (!active.field.getClientRects().length || active.trigger.disabled)) close(false); } };
+  window.ECardDropdowns = {
+    enhanceAttendance() {
+      for (let i = controls.length - 1; i >= 0; i--) {
+        const control = controls[i];
+        if (!control.select.isConnected) {
+          if (active === control) close(false);
+          control.observer.disconnect();
+          control.panel.remove();
+          controls.splice(i, 1);
+        }
+      }
+      document.querySelectorAll('.attendance-month-field select:not(.dropdown-native)').forEach(select => makeDropdown(select.id));
+    },
+    sync() { controls.forEach(refresh); if (active && (!active.field.getClientRects().length || active.trigger.disabled)) close(false); }
+  };
 })();
