@@ -395,6 +395,7 @@ tr.grp td { background:var(--soft); font-weight:700; }
 .back-grades thead tr, .back-values thead tr { height:18px; }
 .back-grades thead th, .back-values thead th { background:#fff; font-size:7.5pt; line-height:1.08; }
 .back-grades .grade-subject { width:47%; }
+.back-grades tbody td:first-child { text-align:left; }
 .back-grades .grade-quarter { width:11%; }
 .back-grades .grade-final, .back-grades .grade-remark { width:15.5%; }
 .back-grades td { font-size:7.6pt; line-height:7.84pt; letter-spacing:-.35px; }
@@ -404,6 +405,7 @@ tr.grp td { background:var(--soft); font-weight:700; }
 .back-text { display:inline-block; }
 .back-semester-gap { height:10px; flex-shrink:0; }
 .back-values .values-name { width:20%; }
+.back-values tbody td:first-child { text-align:left; }
 .back-values .values-statement { width:56%; }
 .back-values .values-quarter { width:6%; }
 .back-values thead th { background:#c9c9c9; }
