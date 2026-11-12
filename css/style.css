@@ -454,16 +454,16 @@ tr.grp td { background:var(--soft); font-weight:700; }
 .term-3-values-only .term-grades tbody td:nth-child(4),
 .term-3-values-only .term-average td:nth-child(5),
 .term-3-values-only .term-average td:nth-child(6),
-.term-3-values-only .g11 .term-grades tbody tr:not(.grp) td:nth-child(5),
-.term-3-values-only .g11 .term-grades tbody tr:not(.grp) td:nth-child(6),
+.term-3-values-only .term-grades tbody tr:not(.grp) td:nth-child(5),
+.term-3-values-only .term-grades tbody tr:not(.grp) td:nth-child(6),
 .term-2-values-only .back-values tbody td:nth-child(4),
 .term-3-values-only .back-values tbody td:nth-child(5) { visibility:visible; color:#000; border-color:transparent; background:transparent; }
 .term-2-values-only .term-grades tbody td:nth-child(3) *,
 .term-3-values-only .term-grades tbody td:nth-child(4) *,
 .term-3-values-only .term-average td:nth-child(5) *,
 .term-3-values-only .term-average td:nth-child(6) *,
-.term-3-values-only .g11 .term-grades tbody tr:not(.grp) td:nth-child(5) *,
-.term-3-values-only .g11 .term-grades tbody tr:not(.grp) td:nth-child(6) *,
+.term-3-values-only .term-grades tbody tr:not(.grp) td:nth-child(5) *,
+.term-3-values-only .term-grades tbody tr:not(.grp) td:nth-child(6) *,
 .term-2-values-only .back-values tbody td:nth-child(4) *,
 .term-3-values-only .back-values tbody td:nth-child(5) * { visibility:visible; }
 
