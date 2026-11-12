@@ -231,6 +231,12 @@ console.log('G11 mapping, blank grades, electives, averages, attendance, values,
   get('btnEmptyOpen').onclick();
   assert.equal(openClicks, 1);
   console.log('Empty workbook state and Open Excel File action passed.');
+  const termBytes = X.write({ ...terms, SheetNames: Object.keys(terms.Sheets) }, { type: 'buffer', bookType: 'xlsx' });
+  await get('fileFallback').onchange({ target: { files: [{ name: 'TEST ONLY G7-G10.xlsx', arrayBuffer: async () => termBytes }], value: '' } });
+  const mathRow = get('cards').innerHTML.match(/<tr[^>]*>(?:(?!<\/tr>)[\s\S])*?term-learning-area[^>]*><span class="back-text">Math<\/span>[\s\S]*?<\/tr>/);
+  assert.ok(mathRow, 'G7-G10 subject row renders');
+  assert.match(mathRow[0], />83\.00<\/span>/, 'Final sheet grade is visible');
+  assert.match(mathRow[0], />PASSED<\/span>/, 'Subject remark is visible');
   console.log('School selection, branding, favicon, switching and workbook signatures passed.');
   console.log('App HTML, format selection, term views, print handlers and incompatible format checks passed (no visual browser check).');
 })().catch(error => { console.error(error); process.exitCode = 1; });

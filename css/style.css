@@ -439,7 +439,7 @@ tr.grp td { background:var(--soft); font-weight:700; }
 .terms .back-legends { justify-content:flex-end; }
 .terms .back-legends table { font-size:9pt; }
 .terms .term-values-legend-title { font-size:10pt; font-weight:700; }
-.terms .markings-guide th, .terms .markings-guide td { text-align:center; }
+.terms .markings-guide th, .terms .markings-guide td { text-align:left; }
 .g11 .term-grades { height:82%; }
 .g11 .term-grades td { font-size:7.5pt; }
 .g11 .term-grades tbody tr.grp { height:24px; }
