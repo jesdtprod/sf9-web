@@ -31,6 +31,24 @@ assert.deepEqual(card.values[0].q, ['SO', 'AO', 'RO']);
 assert.equal(card.months[0].absent, 1);
 const missing = E.buildCard(model, { name: 'MISSING', lrn: 'MISSING' }, cfg);
 assert.ok(missing.terms.subjects.every(s => s.final === null && s.remark === ''));
+// One elective per term, in both compact and spaced workbook templates.
+for (const columns of [[4, 5, 6], [4, 7, 10], [4, 5, 7]]) {
+  const one = base();
+  one.Sheets.Core_Subjects = wb.Sheets.Core_Subjects;
+  one.Sheets.Other_Subjects = wb.Sheets.Other_Subjects;
+  const headers = [], grades = [null, 1, 'TEST-1', 'TEST ONLY'];
+  columns.forEach((col, index) => {
+    headers[col] = 'Biology ' + (index + 1);
+    grades[col] = 87 - index;
+  });
+  one.Sheets.Elective_Subjects = sheet([headers, [], grades]);
+  const parsed = E.parse(X, one, cfg);
+  const electives = E.buildCard(parsed, parsed.students[0], cfg).terms.subjects.filter(s => s.group === 'Elective Subjects');
+  assert.equal(electives.length, 3);
+  assert.deepEqual(electives.map(s => s.grades), [[87, null, null], [null, 86, null], [null, null, 85]]);
+  assert.deepEqual(electives.map(s => s.activeTerms), [[true, false, false], [false, true, false], [false, false, true]]);
+  assert.deepEqual(electives.map(s => s.final), [87, 86, 85]);
+}
 const terms = base();
 for (const [i, name] of ['TERM 1', 'TERM 2', 'TERM 3', 'FINAL'].entries()) {
   terms.Sheets[name] = sheet([[null, null, null, null, 'Math', 'Average', 'Remarks'], [], [null, 1, 'TEST-1', 'TEST ONLY', 80 + i, 80 + i, 'PASSED']]);

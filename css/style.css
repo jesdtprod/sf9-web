@@ -442,7 +442,8 @@ tr.grp td { background:var(--soft); font-weight:700; }
 .terms .markings-guide th, .terms .markings-guide td { text-align:center; }
 .g11 .term-grades { height:82%; }
 .g11 .term-grades td { font-size:7.5pt; }
-.g11 .term-average { height:24px; }
+.g11 .term-grades tbody tr.grp { height:24px; }
+.g11 .term-grades tbody tr:not(.grp) { height:calc((7.9in * .82 - 36px - var(--group-rows) * 24px) / var(--subject-rows)); }
 .term-grades td.unused-term { background:#ddd; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
 
 /* Terms 2 and 3 print only new values over the previously printed card. */

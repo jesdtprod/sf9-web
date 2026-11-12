@@ -410,9 +410,10 @@
     const gradeRow = (name, grades, final, remarks, average, activeTerms) => '<tr' + (average ? ' class="term-average"' : '') + '>' +
       gradeCell(name, 'l ' + (/^(music|arts|p\.?e\.?|health)$/i.test(name) ? 'term-component' : 'term-learning-area')) + grades.map((n, i) => gradeCell(average ? fmtFinal(n) : (n == null ? '' : String(n)), 'c' + (activeTerms && !activeTerms[i] ? ' unused-term' : ''))).join('') +
       gradeCell(average || c.mode === 'terms-g11' ? fmtFinal(final) : '', 'c') + gradeCell(average || c.mode === 'terms-g11' ? remarks : '', 'c ' + (remarks === 'FAILED' ? 'fail' : '')) + '</tr>';
-    let group = '';
+    let group = '', groupCount = 0;
     const rows = c.terms.subjects.map(subject => {
       const heading = subject.group && subject.group !== group ? '<tr class="grp"><td colspan="6">' + esc(subject.group) + '</td></tr>' : '';
+      if (heading) groupCount++;
       group = subject.group;
       return heading + gradeRow(subject.name, subject.grades, subject.final, subject.remark, false, subject.activeTerms);
     }).join('') +
@@ -422,7 +423,7 @@
       .map(r => '<tr><td>' + r.map(esc).join('</td><td>') + '</td></tr>').join('');
     return '<section class="page back terms' + (c.mode === 'terms-g11' ? ' g11' : '') + '">' +
       '<div class="col"><h3 class="sec">REPORT ON LEARNING PROGRESS AND ACHIEVEMENT</h3>' +
-      '<table class="back-grades term-grades"><colgroup><col class="term-subject"><col span="3" class="term-period"><col class="term-final"><col class="term-remark"></colgroup><thead><tr><th rowspan="2">Learning Areas</th><th colspan="3">TERM</th><th rowspan="2">Final Rating</th><th rowspan="2">Remarks</th></tr><tr><th>1</th><th>2</th><th>3</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+      '<table class="back-grades term-grades" style="--subject-rows:' + (c.terms.subjects.length + 1) + ';--group-rows:' + groupCount + '"><colgroup><col class="term-subject"><col span="3" class="term-period"><col class="term-final"><col class="term-remark"></colgroup><thead><tr><th rowspan="2">Learning Areas</th><th colspan="3">TERM</th><th rowspan="2">Final Rating</th><th rowspan="2">Remarks</th></tr><tr><th>1</th><th>2</th><th>3</th></tr></thead><tbody>' + rows + '</tbody></table>' +
       '<div class="back-legends"><table class="scale-guide"><thead><tr><th>Descriptors</th><th>Grade Scale</th><th>Remarks</th></tr></thead><tbody>' + scale + '</tbody></table></div></div>' +
       '<div class="col"><h3 class="sec">REPORT ON LEARNER&#39;S OBSERVED VALUES</h3>' + valuesTable(c) +
       '<div class="back-legends"><div class="term-values-legend-title">Observed Values</div><table class="markings-guide"><thead><tr><th>Marking</th><th>Non-numerical Rating</th></tr></thead><tbody>' + markings + '</tbody></table></div></div></section>';

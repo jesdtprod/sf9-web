@@ -124,11 +124,17 @@
       const gradeSheets = g11Sheets.map((name, i) => {
         const rows = sheetRows(XLSX, wb, name), headers = rows[0] || [];
         const subjects = [];
+        const electiveCols = i === 1 ? headers.map((value, col) => col >= 4 && norm(value) ? col : null).filter(col => col != null) : [];
+        // Compact templates place one or two electives consecutively per term.
+        // Templates with spacer columns retain their three-column term blocks.
+        const compactElectives = electiveCols.length > 0 && electiveCols.every((col, index) => col === 4 + index);
+        const electivesPerTerm = Math.ceil(electiveCols.length / 3);
         for (let col = 4; col < headers.length; col++) {
           const name = norm(headers[col]);
           if (!name) continue;
           // Electives occupy one term only; the other sheets use three columns per subject.
-          const term = i === 1 ? Math.floor((col - 4) / 3) : null;
+          const term = i === 1 ? (electiveCols.length === 3 ? electiveCols.indexOf(col) :
+            Math.floor((col - 4) / (compactElectives ? electivesPerTerm : 3))) : null;
           subjects.push({ name, cols: term == null ? [col, col + 1, col + 2] :
             [0, 1, 2].map(k => k === term ? col : null) });
         }
