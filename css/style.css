@@ -442,6 +442,7 @@ tr.grp td { background:var(--soft); font-weight:700; }
 .terms .markings-guide th, .terms .markings-guide td { text-align:left; }
 .g11 .term-grades { height:82%; }
 .g11 .term-grades td { font-size:7.5pt; }
+.terms .term-grades td.term-component { font-size:8.5pt; font-weight:400; }
 .g11 .term-grades tbody tr.grp { height:24px; }
 .g11 .term-grades tbody tr:not(.grp) { height:calc((7.9in * .82 - 36px - var(--group-rows) * 24px) / var(--subject-rows)); }
 .term-grades td.unused-term { background:#ddd; print-color-adjust:exact; -webkit-print-color-adjust:exact; }
@@ -554,7 +555,9 @@ tr.grp td { background:var(--soft); font-weight:700; }
 @media print {
   html, body { background:#fff; }
   .no-print { display:none !important; }
-  .cards { padding:0; }
+  .cards { padding:0; margin:0; display:block; }
   .card-spread, .page-view { display:contents; }
-  .page { margin:0; box-shadow:none; page-break-after:always; break-after:page; }
+  .page { margin:0; box-shadow:none; page-break-after:auto; break-after:auto; page-break-inside:avoid; break-inside:avoid; }
+  .page-view + .page-view .page,
+  .card-spread + .card-spread .page-view:first-child .page { page-break-before:always; break-before:page; }
 }

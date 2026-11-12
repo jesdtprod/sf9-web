@@ -408,7 +408,7 @@
   function termBackPage(c) {
     const gradeCell = (value, cls) => '<td class="' + cls + '"><span class="back-text">' + esc(value) + '</span></td>';
     const gradeRow = (name, grades, final, remarks, average, activeTerms) => '<tr' + (average ? ' class="term-average"' : '') + '>' +
-      gradeCell(name, 'l ' + (/^(music|arts|p\.?e\.?|health)$/i.test(name) ? 'term-component' : 'term-learning-area')) + grades.map((n, i) => gradeCell(average ? fmtFinal(n) : (n == null ? '' : String(n)), 'c' + (activeTerms && !activeTerms[i] ? ' unused-term' : ''))).join('') +
+      gradeCell(name, 'l ' + (/^(music|arts|p\.?e\.?|health|effective communication|mabisang komunikasyon)$/i.test(name) ? 'term-component' : 'term-learning-area')) + grades.map((n, i) => gradeCell(average ? fmtFinal(n) : (n == null ? '' : String(n)), 'c' + (activeTerms && !activeTerms[i] ? ' unused-term' : ''))).join('') +
       gradeCell(fmtFinal(final), 'c') + gradeCell(remarks, 'c ' + (remarks === 'FAILED' ? 'fail' : '')) + '</tr>';
     let group = '', groupCount = 0;
     const rows = c.terms.subjects.map(subject => {
