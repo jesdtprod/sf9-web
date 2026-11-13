@@ -364,7 +364,7 @@
         '<div class="cancellation-approval"><span>Approved by:</span><div>' + blank + '<b>School Principal</b></div></div>' +
       '</div>' +
       '<div class="col front-cover">' +
-        '<div class="front-school"><div class="school-emblem"><span>' + (c.mode === 'terms' ? 'SF 9-JHS' : 'SF 9-SHS') + '</span><img src="assets/deped.png" alt="School seal"></div><div class="school-name"><h2>' + esc(sc.name) + '</h2><div>' + esc(sc.address) + '</div>' + '<div class="school-recognition">' + esc(sc.recognition) + '</div>' + '<h3>' + esc(sc.subtitle.toUpperCase()) + '</h3></div><img class="school-seal" src="' + esc(sc.logo) + '" alt="' + esc(sc.name) + ' seal"></div>' +
+        '<div class="front-school"><div class="school-emblem"><span>' + (c.mode === 'terms' ? 'SF 9-JHS' : 'SF 9-SHS') + '</span><img src="assets/deped.png" alt="School seal"></div><div class="school-name"><h2>' + esc(sc.name) + '</h2><div class="report-school-address">' + esc(sc.address) + '</div>' + '<div class="school-recognition">' + esc(sc.recognition) + '</div>' + '<h3>' + esc(sc.subtitle.toUpperCase()) + '</h3></div><img class="school-seal" src="' + esc(sc.logo) + '" alt="' + esc(sc.name) + ' seal"></div>' +
         '<h1 class="front-card-title">' + esc(sc.title) + (isTerms(c) && s.schoolYear ? '<span class="term-school-year">School Year ' + esc(s.schoolYear) + '</span>' : '') + '</h1>' +
         '<div class="info front-info">' +
           (isTerms(c)

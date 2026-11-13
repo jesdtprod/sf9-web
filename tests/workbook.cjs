@@ -149,7 +149,7 @@ console.log('G11 mapping, blank grades, electives, averages, attendance, values,
   assert.equal(cache.get('workbook:ndp').name, 'TEST ONLY.xlsx');
   assert.match(get('status').textContent, /loaded/i);
   assert.match(get('cards').innerHTML, /Notre Dame of Parang, Inc./);
-  assert.match(get('cards').innerHTML, /Mabini St., Parang/);
+  assert.match(get('cards').innerHTML, /Mabolo St\., Poblacion I, Parang, Maguindanao del Norte/);
   assert.match(get('cards').innerHTML, /Government Recognition No. 139 s., 1967/);
   assert.match(get('cards').innerHTML, /assets\/ndp.png/);
   assert.match(get('cards').innerHTML, /TEST ONLY PRINCIPAL/);
