@@ -206,10 +206,11 @@
       }
       (group || groups[fallback]).subjects.push(subject);
     });
-    return { groups, genAvg, genAvgDisplay: average?.display[2], remark: remark(genAvg, cfg), found: !!row };
+    return { groups, genAvg, genAvgDisplay: average?.display[2], remark: averageRemark(genAvg, cfg), found: !!row };
   }
 
-  function remark(n, cfg) { return n == null ? '' : (n > cfg.passMark - 0.1 ? 'PASSED' : 'FAILED'); }
+  function remark(n, cfg) { return n == null ? '' : (Math.round(n) >= cfg.passMark ? 'PASSED' : 'FAILED'); }
+  function averageRemark(n, cfg) { return n == null ? '' : (n >= cfg.passMark ? 'PASSED' : 'FAILED'); }
 
   function buildCard(model, st, cfg) {
     const threeTerms = model.mode !== 'quarters';
@@ -233,25 +234,24 @@
           const filled = grades.filter(n => n != null);
           const final = filled.length ? filled.reduce((a, b) => a + b, 0) / filled.length : null;
           return { name: subject.name, group: sheet.title, grades, display: subject.cols.map(col => displayGrade(row, col)), final, activeTerms: subject.cols.map(col => col != null),
-            remark: final == null ? '' : final > 74.4 ? 'PASSED' : 'FAILED' };
+            remark: remark(final, cfg) };
         });
       });
       const average = subjects.find(s => /^average$/i.test(s.name));
       return { subjects: subjects.filter(s => s !== average),
         averageDisplay: average ? [...average.display, null] : [],
-        averages: average ? [...average.grades, average.final] : [null, null, null, null], remark: average ? average.remark : '' };
+        averages: average ? [...average.grades, average.final] : [null, null, null, null], remark: average ? averageRemark(average.final, cfg) : '' };
     })() : model.mode === 'terms' ? (() => {
       const rows = model.termSheets.map(sheet => find(sheet, st));
       const finalHeaders = model.termSheets[3].headers;
       const finalAverageCol = finalHeaders.findIndex(header => /^(general\s+)?average$/i.test(norm(header)));
-      const finalRemarkCol = finalHeaders.findIndex(header => /^remarks?$/i.test(norm(header)));
       const subjects = model.subjects.map(subject => {
         const grades = rows.map(row => { const n = row ? num(row[subject.col]) : null; return n === 0 ? null : n; });
         const final = grades[3];
-        return { name: subject.name, grades: grades.slice(0, 3), display: rows.map(row => displayGrade(row, subject.col)), final, remark: final == null ? '' : (final > 74.4 ? 'PASSED' : 'FAILED') };
+        return { name: subject.name, grades: grades.slice(0, 3), display: rows.map(row => displayGrade(row, subject.col)), final, remark: remark(final, cfg) };
       });
       const averages = rows.map((row, i) => { const col = i === 3 ? finalAverageCol : model.averageCol; const n = row && col >= 0 ? num(row[col]) : null; return n === 0 ? null : n; });
-      const finalRemark = finalRemarkCol >= 0 ? (rows[3] ? norm(rows[3][finalRemarkCol]) : '') : (averages[3] == null ? '' : (averages[3] > 74.4 ? 'PASSED' : 'FAILED'));
+      const finalRemark = averageRemark(averages[3], cfg);
       return { subjects, averages, averageDisplay: rows.map((row, i) => displayGrade(row, i === 3 ? finalAverageCol : model.averageCol)), remark: finalRemark };
     })() : null;
     return {

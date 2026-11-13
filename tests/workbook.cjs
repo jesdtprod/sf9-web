@@ -256,3 +256,29 @@ assert.equal(fc.terms.averageDisplay[3], '90.50');
 for (const name of ['Music', 'Arts', 'PE', 'P.E.', 'Health', 'Music and Arts', 'PE and Health']) assert.ok(E.isComponent(name), name);
 assert.ok(!E.isComponent('MAPEH'));
 assert.ok(!E.isComponent('Mathematics'));
+
+// Remarks follow rounded final ratings, but use unrounded averages in every format.
+for (const [value, finalRemark, avgRemark] of [[74.4, 'FAILED', 'FAILED'], [74.5, 'PASSED', 'FAILED'], [74.99, 'PASSED', 'FAILED'], [75, 'PASSED', 'PASSED']]) {
+  const boundary = base();
+  for (const name of ['TERM 1', 'TERM 2', 'TERM 3', 'FINAL']) {
+    boundary.Sheets[name] = sheet([[null, null, null, null, 'Music and Arts', 'Average', 'Remarks'], [], [null, 1, 'TEST-1', 'TEST ONLY', value, value, 'INCORRECT SOURCE REMARK']]);
+  }
+  let m = E.parse(X, boundary, cfg), c = E.buildCard(m, m.students[0], cfg);
+  assert.equal(c.terms.subjects[0].remark, finalRemark);
+  assert.equal(c.terms.remark, avgRemark);
+  for (const name of ['TERM 1', 'TERM 2', 'TERM 3', 'FINAL']) delete boundary.Sheets[name];
+  for (const name of ['Core_Subjects', 'Elective_Subjects', 'Other_Subjects']) {
+    boundary.Sheets[name] = sheet([[null, null, null, null, name === 'Other_Subjects' ? 'Average' : 'Test Subject'], [], [null, 1, 'TEST-1', 'TEST ONLY', value, value, value]]);
+  }
+  m = E.parse(X, boundary, cfg); c = E.buildCard(m, m.students[0], cfg);
+  assert.equal(c.terms.subjects[0].remark, finalRemark);
+  assert.equal(c.terms.remark, avgRemark);
+  for (const name of ['Core_Subjects', 'Elective_Subjects', 'Other_Subjects']) delete boundary.Sheets[name];
+  for (const name of ['1st Sem', '2nd Sem']) {
+    boundary.Sheets[name] = sheet([[null, null, null, null, null, null, 'Test Subject'], [], [null, 1, 'TEST-1', 'TEST ONLY', null, null, value, value]]);
+  }
+  m = E.parse(X, boundary, cfg); c = E.buildCard(m, m.students[0], cfg);
+  assert.equal(c.sem1.groups[0].subjects[0].remark, finalRemark);
+  assert.equal(c.sem1.remark, avgRemark);
+}
+console.log('Final-rating rounding and unrounded average pass boundaries passed for all formats.');

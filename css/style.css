@@ -428,7 +428,7 @@ tr.grp td { background:var(--soft); font-weight:700; }
 .terms .term-grades thead th, .terms .back-values thead th { background:#fff; font-size:8.5pt; }
 .terms .term-grades td { font-size:8.5pt; line-height:1.12; letter-spacing:0; }
 .terms .term-learning-area { font-weight:700; }
-.back-grades .term-component { padding-left:20px; font-style:italic; }
+.terms .term-component { padding-left:20px; font-style:italic; }
 .terms .term-average { height:38px; }
 .terms .term-average td { font-weight:700; }
 .terms .back-values { height:72%; }

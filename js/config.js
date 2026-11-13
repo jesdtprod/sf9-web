@@ -18,7 +18,7 @@ window.ECARD_CONFIG = {
   // sheet names inside the Excel file
   sheets: { students: 'Students', values: 'Core Values', sem1: '1st Sem', sem2: '2nd Sem', attendance: 'Attendance' },
 
-  passMark: 75,                 // PASSED when grade > passMark - 0.1  (same as your > 74.9)
+  passMark: 75,                 // Rounded final ratings and unrounded averages must reach 75.
   requireBothQuarters: true,    // final grade only shows when both quarters are filled in
   excludeFromAverage: ['Homeroom', 'Conduct'],   // same as your General Average formula
 

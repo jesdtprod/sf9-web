@@ -394,7 +394,7 @@
     sem.groups.forEach(g => {
       if (!g.subjects.length) return;
       h += '<tr class="grp"><td colspan="5">' + esc(g.title) + '</td></tr>';
-      g.subjects.forEach(s => { h += '<tr>' + gradeCell(s.name, 'l' + (E.isComponent(s.name) ? ' term-component' : '')) + gradeCell(sourceGrade(s.q1, s.display?.[0]), 'c') + gradeCell(sourceGrade(s.q2, s.display?.[1]), 'c') + gradeCell(sourceGrade(s.final, s.display?.[2] ?? fmtFinal(s.final)), 'c') + gradeCell(s.remark, 'c ' + (s.remark === 'FAILED' ? 'fail' : '')) + '</tr>'; });
+      g.subjects.forEach(s => { h += '<tr>' + gradeCell(s.name, 'l') + gradeCell(sourceGrade(s.q1, s.display?.[0]), 'c') + gradeCell(sourceGrade(s.q2, s.display?.[1]), 'c') + gradeCell(sourceGrade(s.final, s.display?.[2] ?? fmtFinal(s.final)), 'c') + gradeCell(s.remark, 'c ' + (s.remark === 'FAILED' ? 'fail' : '')) + '</tr>'; });
     });
     h += '<tr class="back-average"><td></td><th colspan="2">General Average</th>' + gradeCell(averageGrade(sem.genAvg), 'c') + gradeCell(sem.remark, 'c ' + (sem.remark === 'FAILED' ? 'fail' : '')) + '</tr></tbody></table>';
     return h;
