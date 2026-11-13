@@ -235,8 +235,24 @@ console.log('G11 mapping, blank grades, electives, averages, attendance, values,
   await get('fileFallback').onchange({ target: { files: [{ name: 'TEST ONLY G7-G10.xlsx', arrayBuffer: async () => termBytes }], value: '' } });
   const mathRow = get('cards').innerHTML.match(/<tr[^>]*>(?:(?!<\/tr>)[\s\S])*?term-learning-area[^>]*><span class="back-text">Math<\/span>[\s\S]*?<\/tr>/);
   assert.ok(mathRow, 'G7-G10 subject row renders');
-  assert.match(mathRow[0], />83\.00<\/span>/, 'Final sheet grade is visible');
+  assert.match(mathRow[0], />83<\/span>/, 'Final sheet grade is visible');
   assert.match(mathRow[0], />PASSED<\/span>/, 'Subject remark is visible');
   console.log('School selection, branding, favicon, switching and workbook signatures passed.');
   console.log('App HTML, format selection, term views, print handlers and incompatible format checks passed (no visual browser check).');
 })().catch(error => { console.error(error); process.exitCode = 1; });
+
+// Excel number formats survive separately from numeric calculation values.
+const formatted = base();
+for (const name of ['TERM 1', 'TERM 2', 'TERM 3', 'FINAL']) {
+  formatted.Sheets[name] = sheet([[null, null, null, null, 'MAPEH', 'Music and Arts', 'PE and Health', 'Average'], [], [null, 1, 'TEST-1', 'TEST ONLY', 90, 90.5, 91, 90.50]]);
+  formatted.Sheets[name].F3.z = '0.0';
+  formatted.Sheets[name].H3.z = '0.00';
+}
+const fm = E.parse(X, formatted, cfg);
+const fc = E.buildCard(fm, fm.students[0], cfg);
+assert.equal(fc.terms.subjects[1].display[0], '90.5');
+assert.equal(fc.terms.subjects[2].display[3], '91');
+assert.equal(fc.terms.averageDisplay[3], '90.50');
+for (const name of ['Music', 'Arts', 'PE', 'P.E.', 'Health', 'Music and Arts', 'PE and Health']) assert.ok(E.isComponent(name), name);
+assert.ok(!E.isComponent('MAPEH'));
+assert.ok(!E.isComponent('Mathematics'));

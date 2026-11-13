@@ -5,7 +5,8 @@
   const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const fmt = E.fmt;
   const isTerms = card => card.mode !== 'quarters';
-  const fmtFinal = n => n == null ? '' : Number(fmt(n)).toFixed(2);
+  const fmtFinal = n => n == null ? '' : String(Math.round(n));
+  const sourceGrade = (n, display) => n == null ? '' : (schoolId === 'ndp' ? String(Math.round(n)) : (display ?? String(n)));
 
   let model = null, handle = null, visible = [];   // students in the loaded workbook
   let schoolId = null;
@@ -392,9 +393,9 @@
     sem.groups.forEach(g => {
       if (!g.subjects.length) return;
       h += '<tr class="grp"><td colspan="5">' + esc(g.title) + '</td></tr>';
-      g.subjects.forEach(s => { h += '<tr>' + gradeCell(s.name, 'l') + gradeCell(fmt(s.q1), 'c') + gradeCell(fmt(s.q2), 'c') + gradeCell(fmtFinal(s.final), 'c') + gradeCell(s.remark, 'c ' + (s.remark === 'FAILED' ? 'fail' : '')) + '</tr>'; });
+      g.subjects.forEach(s => { h += '<tr>' + gradeCell(s.name, 'l' + (E.isComponent(s.name) ? ' term-component' : '')) + gradeCell(sourceGrade(s.q1, s.display?.[0]), 'c') + gradeCell(sourceGrade(s.q2, s.display?.[1]), 'c') + gradeCell(sourceGrade(s.final, s.display?.[2] ?? fmtFinal(s.final)), 'c') + gradeCell(s.remark, 'c ' + (s.remark === 'FAILED' ? 'fail' : '')) + '</tr>'; });
     });
-    h += '<tr class="back-average"><td></td><th colspan="2">General Average</th>' + gradeCell(fmtFinal(sem.genAvg), 'c') + gradeCell(sem.remark, 'c ' + (sem.remark === 'FAILED' ? 'fail' : '')) + '</tr></tbody></table>';
+    h += '<tr class="back-average"><td></td><th colspan="2">General Average</th>' + gradeCell(sourceGrade(sem.genAvg, sem.genAvgDisplay ?? fmtFinal(sem.genAvg)), 'c') + gradeCell(sem.remark, 'c ' + (sem.remark === 'FAILED' ? 'fail' : '')) + '</tr></tbody></table>';
     return h;
   }
 
@@ -407,17 +408,17 @@
 
   function termBackPage(c) {
     const gradeCell = (value, cls) => '<td class="' + cls + '"><span class="back-text">' + esc(value) + '</span></td>';
-    const gradeRow = (name, grades, final, remarks, average, activeTerms) => '<tr' + (average ? ' class="term-average"' : '') + '>' +
-      gradeCell(name, 'l ' + (/^(music|arts|p\.?e\.?|health|effective communication|mabisang komunikasyon)$/i.test(name) ? 'term-component' : 'term-learning-area')) + grades.map((n, i) => gradeCell(average ? fmtFinal(n) : (n == null ? '' : String(n)), 'c' + (activeTerms && !activeTerms[i] ? ' unused-term' : ''))).join('') +
-      gradeCell(fmtFinal(final), 'c') + gradeCell(remarks, 'c ' + (remarks === 'FAILED' ? 'fail' : '')) + '</tr>';
+    const gradeRow = (name, grades, final, remarks, average, activeTerms, display = []) => '<tr' + (average ? ' class="term-average"' : '') + '>' +
+      gradeCell(name, 'l ' + ((E.isComponent(name) || /^(effective communication|mabisang komunikasyon)$/i.test(name)) ? 'term-component' : 'term-learning-area')) + grades.map((n, i) => gradeCell(sourceGrade(n, display[i]), 'c' + (activeTerms && !activeTerms[i] ? ' unused-term' : ''))).join('') +
+      gradeCell(sourceGrade(final, display[3] ?? fmtFinal(final)), 'c') + gradeCell(remarks, 'c ' + (remarks === 'FAILED' ? 'fail' : '')) + '</tr>';
     let group = '', groupCount = 0;
     const rows = c.terms.subjects.map(subject => {
       const heading = subject.group && subject.group !== group ? '<tr class="grp"><td colspan="6">' + esc(subject.group) + '</td></tr>' : '';
       if (heading) groupCount++;
       group = subject.group;
-      return heading + gradeRow(subject.name, subject.grades, subject.final, subject.remark, false, subject.activeTerms);
+      return heading + gradeRow(subject.name, subject.grades, subject.final, subject.remark, false, subject.activeTerms, subject.display);
     }).join('') +
-      gradeRow('Average', c.terms.averages.slice(0, 3), c.terms.averages[3], c.terms.remark, true);
+      gradeRow('Average', c.terms.averages.slice(0, 3), c.terms.averages[3], c.terms.remark, true, null, c.terms.averageDisplay);
     const markings = cfg.markings.map(m => '<tr><td>' + esc(m[0]) + '</td><td>' + esc(m[1]) + '</td></tr>').join('');
     const scale = [['Advancing', '90-100', 'Passed'], ['Benchmarking', '85-89', 'Passed'], ['Connecting', '80-84', 'Passed'], ['Developing', '75-79', 'Passed'], ['Emerging', 'Below 75', 'Failed']]
       .map(r => '<tr><td>' + r.map(esc).join('</td><td>') + '</td></tr>').join('');

@@ -17,7 +17,14 @@
     if (!ws) throw new Error('The Excel file has no sheet named "' + name + '".');
     const r = XLSX.utils.decode_range(ws['!ref'] || 'A1');
     r.s = { r: 0, c: 0 };                       // absolute positions, row 1 = index 0
-    return XLSX.utils.sheet_to_json(ws, { header: 1, range: r, defval: null, raw: true, blankrows: true });
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, range: r, defval: null, raw: true, blankrows: true });
+    rows.forEach((row, ri) => {
+      row.display = row.map((value, ci) => {
+        const cell = ws[XLSX.utils.encode_cell({ r: ri, c: ci })];
+        return cell ? XLSX.utils.format_cell(cell) : '';
+      });
+    });
+    return rows;
   }
 
   function parseDate(v) {
@@ -164,6 +171,10 @@
     });
   }
 
+  const displayGrade = (row, col) => row && col != null && num(row[col]) != null
+    ? (row.display?.[col] ?? String(row[col])) : '';
+  const isComponent = name => /^(music|arts?|p\.?\s*e\.?|physical education|health)(\s*(and|&|\/|,)\s*(music|arts?|p\.?\s*e\.?|physical education|health))*$/i.test(norm(name));
+
   const find = (idx, st) => idx.byName.get(key(st.name)) || idx.byLrn.get(st.lrn) || null;
 
   function buildSem(sem, st, cfg, semNo) {
@@ -173,17 +184,20 @@
       const q1 = row ? num(row[s.col]) : null, q2 = row ? num(row[s.col + 1]) : null;
       const ok = cfg.requireBothQuarters ? (q1 != null && q2 != null) : (q1 != null || q2 != null);
       const vals = [q1, q2].filter(v => v != null);
-      const final = ok ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
-      return { name: s.name, group: s.group, q1, q2, final, remark: remark(final, cfg), inAverage: !excl.has(key(s.name)) };
+      const sourceFinal = row ? num(row[s.col + 2]) : null;
+      const final = sourceFinal ?? (ok ? vals.reduce((a, b) => a + b, 0) / vals.length : null);
+      return { name: s.name, group: s.group, q1, q2, display: [displayGrade(row, s.col), displayGrade(row, s.col + 1), sourceFinal == null ? null : displayGrade(row, s.col + 2)], final, remark: remark(final, cfg), inAverage: !excl.has(key(s.name)) };
     });
-    const fin = subjects.filter(s => s.inAverage && s.final != null).map(s => s.final);
-    const genAvg = fin.length ? fin.reduce((a, b) => a + b, 0) / fin.length : null;
+    const average = subjects.find(s => /^(general\s+)?average$/i.test(s.name));
+    const fin = subjects.filter(s => s !== average && s.inAverage && s.final != null).map(s => s.final);
+    const genAvg = average?.final ?? (fin.length ? fin.reduce((a, b) => a + b, 0) / fin.length : null);
     // Keep the standard category order, while taking membership from the file.
     const layout = cfg.layout[semNo];
     const groups = layout.map(([title]) => ({ title, subjects: [] }));
     const categoryKey = value => key(value).replace(/[^A-Z0-9]/g, '');
     let boundary = 0, fallback = 0;
     subjects.forEach((subject, index) => {
+      if (subject === average) return;
       while (fallback < layout.length - 1 && index >= boundary + layout[fallback][1]) boundary += layout[fallback++][1];
       let group = subject.group && groups.find(g => categoryKey(g.title) === categoryKey(subject.group));
       if (!group && subject.group) {
@@ -192,7 +206,7 @@
       }
       (group || groups[fallback]).subjects.push(subject);
     });
-    return { groups, genAvg, remark: remark(genAvg, cfg), found: !!row };
+    return { groups, genAvg, genAvgDisplay: average?.display[2], remark: remark(genAvg, cfg), found: !!row };
   }
 
   function remark(n, cfg) { return n == null ? '' : (n > cfg.passMark - 0.1 ? 'PASSED' : 'FAILED'); }
@@ -218,12 +232,13 @@
           const grades = subject.cols.map(col => { const n = row && col != null ? num(row[col]) : null; return n === 0 ? null : n; });
           const filled = grades.filter(n => n != null);
           const final = filled.length ? filled.reduce((a, b) => a + b, 0) / filled.length : null;
-          return { name: subject.name, group: sheet.title, grades, final, activeTerms: subject.cols.map(col => col != null),
+          return { name: subject.name, group: sheet.title, grades, display: subject.cols.map(col => displayGrade(row, col)), final, activeTerms: subject.cols.map(col => col != null),
             remark: final == null ? '' : final > 74.4 ? 'PASSED' : 'FAILED' };
         });
       });
       const average = subjects.find(s => /^average$/i.test(s.name));
       return { subjects: subjects.filter(s => s !== average),
+        averageDisplay: average ? [...average.display, null] : [],
         averages: average ? [...average.grades, average.final] : [null, null, null, null], remark: average ? average.remark : '' };
     })() : model.mode === 'terms' ? (() => {
       const rows = model.termSheets.map(sheet => find(sheet, st));
@@ -233,11 +248,11 @@
       const subjects = model.subjects.map(subject => {
         const grades = rows.map(row => { const n = row ? num(row[subject.col]) : null; return n === 0 ? null : n; });
         const final = grades[3];
-        return { name: subject.name, grades: grades.slice(0, 3), final, remark: final == null ? '' : (final > 74.4 ? 'PASSED' : 'FAILED') };
+        return { name: subject.name, grades: grades.slice(0, 3), display: rows.map(row => displayGrade(row, subject.col)), final, remark: final == null ? '' : (final > 74.4 ? 'PASSED' : 'FAILED') };
       });
       const averages = rows.map((row, i) => { const col = i === 3 ? finalAverageCol : model.averageCol; const n = row && col >= 0 ? num(row[col]) : null; return n === 0 ? null : n; });
       const finalRemark = finalRemarkCol >= 0 ? (rows[3] ? norm(rows[3][finalRemarkCol]) : '') : (averages[3] == null ? '' : (averages[3] > 74.4 ? 'PASSED' : 'FAILED'));
-      return { subjects, averages, remark: finalRemark };
+      return { subjects, averages, averageDisplay: rows.map((row, i) => displayGrade(row, i === 3 ? finalAverageCol : model.averageCol)), remark: finalRemark };
     })() : null;
     return {
       mode: model.mode, terms, adviser: model.adviser, principal: model.principal,
@@ -252,6 +267,6 @@
 
   const fmt = n => (n == null ? '' : String(round2(n)));
 
-  root.ECard = { parse, buildCard, fmt, norm, key };
+  root.ECard = { parse, buildCard, fmt, norm, key, isComponent };
   if (typeof module !== 'undefined') module.exports = root.ECard;
 })(typeof window !== 'undefined' ? window : globalThis);
