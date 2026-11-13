@@ -282,3 +282,17 @@ for (const [value, finalRemark, avgRemark] of [[74.4, 'FAILED', 'FAILED'], [74.5
   assert.equal(c.sem1.remark, avgRemark);
 }
 console.log('Final-rating rounding and unrounded average pass boundaries passed for all formats.');
+
+// Sarmiento final remarks use the source value, even when display rounds to 75.
+for (const schoolId of ['nds', 'ndp']) {
+  const schoolCfg = { ...cfg, schoolId };
+  for (const value of [74.49, 74.5, 74.99, 75]) {
+    const book = base();
+    for (const name of ['TERM 1', 'TERM 2', 'TERM 3', 'FINAL']) {
+      book.Sheets[name] = sheet([[null, null, null, null, 'Test Subject', 'Average'], [], [null, 1, 'TEST-1', 'TEST ONLY', value, value]]);
+    }
+    const m = E.parse(X, book, schoolCfg), c = E.buildCard(m, m.students[0], schoolCfg);
+    assert.equal(c.terms.subjects[0].remark, (schoolId === 'nds' ? value : Math.round(value)) >= 75 ? 'PASSED' : 'FAILED');
+    assert.equal(c.terms.remark, value >= 75 ? 'PASSED' : 'FAILED');
+  }
+}

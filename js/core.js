@@ -209,7 +209,7 @@
     return { groups, genAvg, genAvgDisplay: average?.display[2], remark: averageRemark(genAvg, cfg), found: !!row };
   }
 
-  function remark(n, cfg) { return n == null ? '' : (Math.round(n) >= cfg.passMark ? 'PASSED' : 'FAILED'); }
+  function remark(n, cfg) { return n == null ? '' : ((cfg.schoolId === 'nds' ? n : Math.round(n)) >= cfg.passMark ? 'PASSED' : 'FAILED'); }
   function averageRemark(n, cfg) { return n == null ? '' : (n >= cfg.passMark ? 'PASSED' : 'FAILED'); }
 
   function buildCard(model, st, cfg) {
