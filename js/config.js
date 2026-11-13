@@ -11,7 +11,7 @@ window.ECARD_CONFIG = {
     adviser: ''
   },
   templates: {
-    ndp: { name: 'Notre Dame of Parang, Inc.', address: 'Mabini St., Parang, Maguindanao Del Norte', recognition: 'Government Recognition No. 139 s., 1967', logo: 'assets/ndp.png' },
+    ndp: { name: 'Notre Dame of Parang, Inc.', address: 'Mabolo St., Poblacion I, Parang, Maguindanao del Norte', recognition: 'Government Recognition No. 139 s., 1967', logo: 'assets/ndp.png' },
     nds: { name: 'Notre Dame of Sarmiento, Inc.', address: 'Sarmiento, Parang, Maguindanao Del Norte', recognition: 'Government Recognition No. 40 s., 1971', logo: 'assets/nds.png' }
   },
 
