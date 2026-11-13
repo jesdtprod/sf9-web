@@ -6,7 +6,8 @@
   const fmt = E.fmt;
   const isTerms = card => card.mode !== 'quarters';
   const fmtFinal = n => n == null ? '' : String(Math.round(n));
-  const sourceGrade = (n, display) => n == null ? '' : (schoolId === 'ndp' ? String(Math.round(n)) : (display ?? String(n)));
+  const sourceGrade = n => n == null ? '' : String(Math.round(n));
+  const averageGrade = n => n == null ? '' : (schoolId === 'nds' ? Number(n).toFixed(2) : String(Math.round(n)));
 
   let model = null, handle = null, visible = [];   // students in the loaded workbook
   let schoolId = null;
@@ -395,7 +396,7 @@
       h += '<tr class="grp"><td colspan="5">' + esc(g.title) + '</td></tr>';
       g.subjects.forEach(s => { h += '<tr>' + gradeCell(s.name, 'l' + (E.isComponent(s.name) ? ' term-component' : '')) + gradeCell(sourceGrade(s.q1, s.display?.[0]), 'c') + gradeCell(sourceGrade(s.q2, s.display?.[1]), 'c') + gradeCell(sourceGrade(s.final, s.display?.[2] ?? fmtFinal(s.final)), 'c') + gradeCell(s.remark, 'c ' + (s.remark === 'FAILED' ? 'fail' : '')) + '</tr>'; });
     });
-    h += '<tr class="back-average"><td></td><th colspan="2">General Average</th>' + gradeCell(sourceGrade(sem.genAvg, sem.genAvgDisplay ?? fmtFinal(sem.genAvg)), 'c') + gradeCell(sem.remark, 'c ' + (sem.remark === 'FAILED' ? 'fail' : '')) + '</tr></tbody></table>';
+    h += '<tr class="back-average"><td></td><th colspan="2">General Average</th>' + gradeCell(averageGrade(sem.genAvg), 'c') + gradeCell(sem.remark, 'c ' + (sem.remark === 'FAILED' ? 'fail' : '')) + '</tr></tbody></table>';
     return h;
   }
 
@@ -409,8 +410,8 @@
   function termBackPage(c) {
     const gradeCell = (value, cls) => '<td class="' + cls + '"><span class="back-text">' + esc(value) + '</span></td>';
     const gradeRow = (name, grades, final, remarks, average, activeTerms, display = []) => '<tr' + (average ? ' class="term-average"' : '') + '>' +
-      gradeCell(name, 'l ' + ((E.isComponent(name) || /^(effective communication|mabisang komunikasyon)$/i.test(name)) ? 'term-component' : 'term-learning-area')) + grades.map((n, i) => gradeCell(sourceGrade(n, display[i]), 'c' + (activeTerms && !activeTerms[i] ? ' unused-term' : ''))).join('') +
-      gradeCell(sourceGrade(final, display[3] ?? fmtFinal(final)), 'c') + gradeCell(remarks, 'c ' + (remarks === 'FAILED' ? 'fail' : '')) + '</tr>';
+      gradeCell(name, 'l ' + ((E.isComponent(name) || /^(effective communication|mabisang komunikasyon)$/i.test(name)) ? 'term-component' : 'term-learning-area')) + grades.map((n, i) => gradeCell(average ? averageGrade(n) : sourceGrade(n), 'c' + (activeTerms && !activeTerms[i] ? ' unused-term' : ''))).join('') +
+      gradeCell(average ? averageGrade(final) : sourceGrade(final), 'c') + gradeCell(remarks, 'c ' + (remarks === 'FAILED' ? 'fail' : '')) + '</tr>';
     let group = '', groupCount = 0;
     const rows = c.terms.subjects.map(subject => {
       const heading = subject.group && subject.group !== group ? '<tr class="grp"><td colspan="6">' + esc(subject.group) + '</td></tr>' : '';
