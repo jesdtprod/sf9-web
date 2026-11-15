@@ -40,13 +40,27 @@
 
   function readStudents(rows, mode) {
     const out = [];
+    const headerCol = pattern => {
+      for (const row of rows.slice(0, 3)) {
+        const col = row.findIndex(value => pattern.test(norm(value)));
+        if (col >= 0) return col;
+      }
+      return -1;
+    };
+    const strandCol = mode === 'terms-g11' ? headerCol(/^strand(?:\s|:|$)/i) : -1;
+    const gradeCol = headerCol(/^grade(?:\s*(?:level|&|and|\/).*)?$/i);
+    const sectionCol = headerCol(/^section$/i);
     for (let r = 3; r < rows.length; r++) {
       const row = rows[r] || [];
       const name = norm(row[2]);
       if (!name) continue;
       if (mode !== 'quarters') {
         out.push({ lrn: norm(row[1]), name, birth: parseDate(row[3]), sex: norm(row[4]),
-          schoolYear: norm(row[5]), curriculum: norm(row[6]), grade: norm(row[7]), section: norm(row[8]), strand: '' });
+          schoolYear: norm(row[5]), curriculum: norm(row[6]),
+          grade: norm(row[gradeCol >= 0 ? gradeCol : strandCol === 7 ? 8 : 7]),
+          section: norm(row[sectionCol >= 0 ? sectionCol : strandCol === 7 ? 9 : 8]),
+          strand: mode === 'terms-g11' ? (strandCol >= 0 ? norm(row[strandCol]) :
+            norm(row.slice(7).find(value => /^(HUMSS|STEM|ABM|GAS|TVL|ICT|HE|SMAW|AFA|SPORTS|ARTS AND DESIGN)$/i.test(norm(value))))) : '' });
         continue;
       }
       out.push({
@@ -251,8 +265,10 @@
         return { name: subject.name, grades: grades.slice(0, 3), display: rows.map(row => displayGrade(row, subject.col)), final, remark: remark(final, cfg) };
       });
       const averages = rows.map((row, i) => { const col = i === 3 ? finalAverageCol : model.averageCol; const n = row && col >= 0 ? num(row[col]) : null; return n === 0 ? null : n; });
+      const termAverages = averages.slice(0, 3);
+      const generalAverage = termAverages.every(n => n != null) ? termAverages.reduce((sum, n) => sum + n, 0) / 3 : null;
       const finalRemark = averageRemark(averages[3], cfg);
-      return { subjects, averages, averageDisplay: rows.map((row, i) => displayGrade(row, i === 3 ? finalAverageCol : model.averageCol)), remark: finalRemark };
+      return { subjects, averages, generalAverage, generalAverageRemark: averageRemark(generalAverage, cfg), averageDisplay: rows.map((row, i) => displayGrade(row, i === 3 ? finalAverageCol : model.averageCol)), remark: finalRemark };
     })() : null;
     return {
       mode: model.mode, terms, adviser: model.adviser, principal: model.principal,

@@ -431,6 +431,10 @@ tr.grp td { background:var(--soft); font-weight:700; }
 .terms .term-component { padding-left:20px; font-style:italic; }
 .terms .term-average { height:38px; }
 .terms .term-average td { font-weight:700; }
+.terms .general-average th, .terms .general-average td {
+  background:#fff; font-family:inherit; font-size:8.5pt; line-height:7.84pt;
+  letter-spacing:-.2px; font-weight:700;
+}
 .terms .back-values { height:72%; }
 .terms .back-values .values-name { width:20%; }
 .terms .back-values .values-statement { width:58%; }

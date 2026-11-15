@@ -373,7 +373,7 @@
             ? '<div class="row term-name-row">' + field('Name:', s.name) + '</div>' +
               '<div class="row">' + field('Age:', c.age) + field('Sex:', s.sex) + '</div>' +
               '<div class="row">' + field('Grade:', s.grade) + field('Section:', s.section) + '</div>' +
-              '<div class="row lrn-row">' + field('LRN:', s.lrn) + '</div>' +
+              '<div class="row lrn-row">' + field('LRN:', s.lrn) + (c.mode === 'terms-g11' ? field('Strand:', s.strand) : '') + '</div>' +
               '<div class="row">' + field('Curriculum:', s.curriculum) + '</div>'
             : '<div class="row full-name-row">' + field('Name:', s.name) + '</div>' +
               '<div class="row">' + field('Age:', c.age) + field('Sex:', s.sex) + '</div>' +
@@ -411,7 +411,7 @@
     const gradeCell = (value, cls) => '<td class="' + cls + '"><span class="back-text">' + esc(value) + '</span></td>';
     const gradeRow = (name, grades, final, remarks, average, activeTerms, display = []) => '<tr' + (average ? ' class="term-average"' : '') + '>' +
       gradeCell(name, 'l ' + (((c.mode === 'terms' && E.isComponent(name)) || /^(effective communication|mabisang k[ou]munikasyon)$/i.test(name)) ? 'term-component' : 'term-learning-area')) + grades.map((n, i) => gradeCell(average ? averageGrade(n) : sourceGrade(n), 'c' + (activeTerms && !activeTerms[i] ? ' unused-term' : ''))).join('') +
-      gradeCell(average ? averageGrade(final) : sourceGrade(final), 'c') + gradeCell(remarks, 'c ' + (remarks === 'FAILED' ? 'fail' : '')) + '</tr>';
+      (average && c.mode === 'terms' ? gradeCell('', 'c') + gradeCell('', 'c') : gradeCell(average ? averageGrade(final) : sourceGrade(final), 'c') + gradeCell(remarks, 'c ' + (remarks === 'FAILED' ? 'fail' : ''))) + '</tr>';
     let group = '', groupCount = 0;
     const rows = c.terms.subjects.map(subject => {
       const heading = subject.group && subject.group !== group ? '<tr class="grp"><td colspan="6">' + esc(subject.group) + '</td></tr>' : '';
@@ -419,13 +419,14 @@
       group = subject.group;
       return heading + gradeRow(subject.name, subject.grades, subject.final, subject.remark, false, subject.activeTerms, subject.display);
     }).join('') +
-      gradeRow('Average', c.terms.averages.slice(0, 3), c.terms.averages[3], c.terms.remark, true, null, c.terms.averageDisplay);
+      gradeRow('Average', c.terms.averages.slice(0, 3), c.terms.averages[3], c.terms.remark, true, null, c.terms.averageDisplay) +
+      (c.mode === 'terms' ? '<tr class="term-average general-average"><th colspan="4">General Average</th>' + gradeCell(c.terms.generalAverage == null ? '' : Number(c.terms.generalAverage).toFixed(2), 'c') + gradeCell(c.terms.generalAverageRemark, 'c ' + (c.terms.generalAverageRemark === 'FAILED' ? 'fail' : '')) + '</tr>' : '');
     const markings = cfg.markings.map(m => '<tr><td>' + esc(m[0]) + '</td><td>' + esc(m[1]) + '</td></tr>').join('');
     const scale = [['Advancing', '90-100', 'Passed'], ['Benchmarking', '85-89', 'Passed'], ['Connecting', '80-84', 'Passed'], ['Developing', '75-79', 'Passed'], ['Emerging', 'Below 75', 'Failed']]
       .map(r => '<tr><td>' + r.map(esc).join('</td><td>') + '</td></tr>').join('');
     return '<section class="page back terms' + (c.mode === 'terms-g11' ? ' g11' : '') + '">' +
       '<div class="col"><h3 class="sec">REPORT ON LEARNING PROGRESS AND ACHIEVEMENT</h3>' +
-      '<table class="back-grades term-grades" style="--subject-rows:' + (c.terms.subjects.length + 1) + ';--group-rows:' + groupCount + '"><colgroup><col class="term-subject"><col span="3" class="term-period"><col class="term-final"><col class="term-remark"></colgroup><thead><tr><th rowspan="2">Learning Areas</th><th colspan="3">TERM</th><th rowspan="2">Final Rating</th><th rowspan="2">Remarks</th></tr><tr><th>1</th><th>2</th><th>3</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+      '<table class="back-grades term-grades" style="--subject-rows:' + (c.terms.subjects.length + (c.mode === 'terms' ? 2 : 1)) + ';--group-rows:' + groupCount + '"><colgroup><col class="term-subject"><col span="3" class="term-period"><col class="term-final"><col class="term-remark"></colgroup><thead><tr><th rowspan="2">Learning Areas</th><th colspan="3">TERM</th><th rowspan="2">Final Rating</th><th rowspan="2">Remarks</th></tr><tr><th>1</th><th>2</th><th>3</th></tr></thead><tbody>' + rows + '</tbody></table>' +
       '<div class="back-legends"><table class="scale-guide"><thead><tr><th>Descriptors</th><th>Grade Scale</th><th>Remarks</th></tr></thead><tbody>' + scale + '</tbody></table></div></div>' +
       '<div class="col"><h3 class="sec">REPORT ON LEARNER&#39;S OBSERVED VALUES</h3>' + valuesTable(c) +
       '<div class="back-legends"><div class="term-values-legend-title">Observed Values</div><table class="markings-guide"><thead><tr><th>Marking</th><th>Non-numerical Rating</th></tr></thead><tbody>' + markings + '</tbody></table></div></div></section>';
@@ -482,7 +483,9 @@
         subjects: card.terms.subjects.map(subject => ({ ...subject, grades: maskGrades(subject.grades),
           final: term === 3 ? subject.final : null, remark: term === 3 ? subject.remark : '' })),
         averages: [...maskGrades(card.terms.averages.slice(0, 3)), term === 3 ? card.terms.averages[3] : null],
-        remark: term === 3 ? card.terms.remark : '' },
+        remark: term === 3 ? card.terms.remark : '',
+        generalAverage: term === 3 ? card.terms.generalAverage : null,
+        generalAverageRemark: term === 3 ? card.terms.generalAverageRemark : '' },
       values: card.values.map(value => ({ ...value, q: value.q.map((mark, index) => index === term - 1 ? mark : '') }))
     };
   }

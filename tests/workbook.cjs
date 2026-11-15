@@ -235,8 +235,10 @@ console.log('G11 mapping, blank grades, electives, averages, attendance, values,
   await get('fileFallback').onchange({ target: { files: [{ name: 'TEST ONLY G7-G10.xlsx', arrayBuffer: async () => termBytes }], value: '' } });
   const mathRow = get('cards').innerHTML.match(/<tr[^>]*>(?:(?!<\/tr>)[\s\S])*?term-learning-area[^>]*><span class="back-text">Math<\/span>[\s\S]*?<\/tr>/);
   assert.ok(mathRow, 'G7-G10 subject row renders');
+  assert.match(get('cards').innerHTML, /<tr class="term-average">(?:(?!<\/tr>)[\s\S])*<td class="c"><span class="back-text"><\/span><\/td><td class="c"><span class="back-text"><\/span><\/td><\/tr>/, 'Term Average keeps separate blank final rating and remarks cells');
   assert.match(mathRow[0], />83<\/span>/, 'Final sheet grade is visible');
   assert.match(mathRow[0], />PASSED<\/span>/, 'Subject remark is visible');
+  assert.match(get('cards').innerHTML, /General Average<\/th><td class="c"><span class="back-text">81\.00<\/span>/, 'G7-G10 general average is the mean of term averages with two decimals');
   console.log('School selection, branding, favicon, switching and workbook signatures passed.');
   console.log('App HTML, format selection, term views, print handlers and incompatible format checks passed (no visual browser check).');
 })().catch(error => { console.error(error); process.exitCode = 1; });
@@ -296,3 +298,19 @@ for (const schoolId of ['nds', 'ndp']) {
     assert.equal(c.terms.remark, value >= 75 ? 'PASSED' : 'FAILED');
   }
 }
+
+const gaModel = E.parse(X, terms, cfg);
+assert.equal(E.buildCard(gaModel, gaModel.students[0], cfg).terms.generalAverage, 81);
+const incompleteTerms = structuredClone(terms);
+delete incompleteTerms.Sheets['TERM 2'].F3;
+const gaMissing = E.parse(X, incompleteTerms, cfg);
+assert.equal(E.buildCard(gaMissing, gaMissing.students[0], cfg).terms.generalAverage, null);
+
+// G11-G12 strand headers may shift Grade and Section one column to the right.
+const strandBook = structuredClone(wb);
+strandBook.Sheets.Students = sheet([['NO.', 'LRN NO.', 'STUDENT NAME', 'BIRTHDATE', 'GENDER', 'SCHOOL YEAR', 'CURRICULUM', 'STRAND', 'GRADE', 'SECTION'], [], [], [1, 'TEST-1', 'TEST ONLY', '09/11/2009', 'FEMALE', '2026-2027', 'K to 12', 'HUMSS', 'GRADE 11', 'TEST SECTION']]);
+const strandModel = E.parse(X, strandBook, cfg);
+assert.equal(strandModel.students[0].strand, 'HUMSS');
+assert.equal(strandModel.students[0].grade, 'GRADE 11');
+assert.equal(strandModel.students[0].section, 'TEST SECTION');
+assert.equal(E.buildCard(strandModel, strandModel.students[0], cfg).student.strand, 'HUMSS');
